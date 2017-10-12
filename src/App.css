@@ -1,0 +1,24 @@
+#root {
+    text-align: center;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#root-container {
+    margin-top: 50px;
+}
+
+#search, #graph-config {
+    display: inline-block;
+}
+
+#content {
+    margin-top: 20px;
+}
+
+#content .is-loading {
+    border: 0;
+}
