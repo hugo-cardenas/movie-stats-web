@@ -1,40 +1,39 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
-import { Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import * as randomColor from 'randomcolor';
-import { isEqual } from 'lodash';
-
-/*
-    Each label 250px
-    5 lines
-
-    Num lines = num labels / (width / 250)
-    width / (num labels * 250 / 5)
-*/
+import _ from 'lodash';
+import chroma from 'chroma-js';
 
 const
     CHART_PIE = 'pie',
-    CHART_TIMELINE = 'timeline';
+    CHART_TIMELINE = 'timeline',
 
-const
+    TIMELINE_ALL = 'all',
+    TIMELINE_ACTOR = 'actor',
+    TIMELINE_DIRECTOR = 'director',
+
     PIE_ACTOR = 'actor',
     PIE_DIRECTOR = 'director';
 
 const DEFAULT_PIE_MIN_COUNT = 2;
+const DEFAULT_TIMELINE_MIN_COUNT = 4;
 
 class Graph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartType: CHART_PIE,
+            chartType: CHART_TIMELINE,
+            timelineType: TIMELINE_ALL,
+            timelineMinCount: DEFAULT_TIMELINE_MIN_COUNT,
             pieType: PIE_DIRECTOR,
             pieMinCount: DEFAULT_PIE_MIN_COUNT
         };
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        return !isEqual(this.props, nextProps) ||
-            !isEqual(this.state, nextState);
+        return !_.isEqual(this.props, nextProps) ||
+            !_.isEqual(this.state, nextState);
     }
 
     render() {
@@ -97,10 +96,61 @@ class Graph extends Component {
     }
 
     renderTimelineForm() {
+        const { timelineType } = this.state;
+
         return <form id="graph-config">
             <div className="field is-horizontal">
+                <div className="field-body">
+                    <div className="field">
+                        <div className="control">
+                            <div className="select">
+                                <select onChange={this.handleTimelineType.bind(this)}>
+                                    <option value={TIMELINE_ALL}>All movies</option>
+                                    <option value={TIMELINE_DIRECTOR}>By director</option>
+                                    <option value={TIMELINE_ACTOR}>By actor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {timelineType !== TIMELINE_ALL ? this.renderTimelineFormLimit() : ''}
+                </div>
             </div>
-        </form>
+        </form>;
+    }
+
+    renderTimelineFormLimit() {
+        return <div className="field is-horizontal">
+            <div className="field-label is-normal">
+                <p>each with at least</p>
+            </div>
+            <div className="field-body">
+                <div className="field">
+                    <div className="control">
+                        <div className="select">
+                            <select onChange={this.handleTimelineMinCount.bind(this)} 
+                                defaultValue={DEFAULT_TIMELINE_MIN_COUNT}>
+                                <option value="1">1 movie</option>
+                                <option value="2">2 movies</option>
+                                <option value="3">3 movies</option>
+                                <option value="4">4 movies</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>;
+    }
+
+    handleTimelineType(event) {
+        const type = event.target.value;
+        if ([TIMELINE_ALL, TIMELINE_DIRECTOR, TIMELINE_ACTOR].includes(type)) {
+            this.setState({ timelineType: type });
+        }
+    }
+
+    handleTimelineMinCount(event) {
+        const value = parseInt(event.target.value, 10);
+        this.setState({ timelineMinCount: value > 0 ? value : 1 });
     }
 
     renderPieForm() {
@@ -117,9 +167,7 @@ class Graph extends Component {
                             </div>
                         </div>
                     </div>
-
                     <div className="field is-horizontal">
-                    
                         <div className="field-label is-normal">
                             <p>appearing at least</p>
                         </div>
@@ -127,7 +175,8 @@ class Graph extends Component {
                             <div className="field">
                                 <div className="control">
                                     <div className="select">
-                                        <select onChange={this.handlePieMinCount.bind(this)} defaultValue={DEFAULT_PIE_MIN_COUNT}>
+                                        <select onChange={this.handlePieMinCount.bind(this)} 
+                                            defaultValue={DEFAULT_PIE_MIN_COUNT}>
                                             <option value="1">once</option>
                                             <option value="2">twice</option>
                                             <option value="3">3 times</option>
@@ -137,10 +186,7 @@ class Graph extends Component {
                                 </div>
                             </div>
                         </div>
-                    
                     </div>
-
-                    
                 </div>
             </div>
         </form>;
@@ -159,35 +205,73 @@ class Graph extends Component {
     }
 
     renderTimelineChart() {
+        const { movies } = this.props;
+        const { timelineType, timelineMinCount } = this.state;
+
+        const monthCount = getMovieAttributeCount(movies, 'addedAtMonth');
+        const labels = Object.keys(monthCount).map(value => parseInt(value, 10));
+        
+        let countGroups;
+        if (timelineType === TIMELINE_ALL) {
+            countGroups = {
+                ['All movies']: monthCount
+            };
+        } else {
+            countGroups = getGroupedCount(movies, 'addedAtMonth', 'director');
+        }
+        // TODO Support for actors
+        const colors = randomColor({count: Object.keys(countGroups).length});
+        
+        const datasets = Object.keys(countGroups)
+            .filter(groupBy => {
+                return Object.values(countGroups[groupBy])
+                    .reduce((sum, current) => sum + current) >= timelineMinCount;
+            })
+            .map((groupBy, i) => {
+                const color = colors[i];
+                return {
+                    label: groupBy,
+                    data: labels.map(label => countGroups[groupBy][label] ? countGroups[groupBy][label] : 0),
+                    borderColor: chroma(color).css(),
+                    backgroundColor: chroma(color).css()
+                }
+            });
+
+
         const data = {
-            labels: ["January", "February", "March", "April", "May", "June", "July"],
-            datasets: [{
-                label: "My First dataset",
-                // backgroundColor: 'rgb(255, 99, 132)',
-                // borderColor: 'rgb(255, 99, 132)',
-                data: [0, 10, 5, 2, 20, 30, 45],
-            }]
+            labels: labels.map(getMonthName),
+            datasets
         };
-        return <Line data={data}/>;
+        const options = {
+            legend: {
+                display: shouldDisplayLegend(datasets.length),
+                onClick: (e, legendItem) => {
+
+                }
+            }
+        };
+
+        return <Bar data={data} options={options}/>;
     }
 
     renderPieChart() {
         const { movies } = this.props;
         const { pieType, pieMinCount } = this.state;
 
-        const nameCount = getNameCount(movies, pieType);
-        const items = getPieItems(nameCount, pieMinCount);
+        const attribute = pieType === PIE_DIRECTOR ? 'director' : 'actors';
+        const nameCount = getMovieAttributeCount(movies, attribute);
+        const items = getChartItems(nameCount, pieMinCount);
 
         const data = {
             datasets: [{
                 data: items.map(item => item.count),
                 backgroundColor: items.map(item => randomColor({ luminosity: 'light', count: items.count }))
             }],
-            labels: items.map(item => item.name)
+            labels: items.map(item => item.label)
         };
 
         const options = {
-            legend: { display: shouldDisplayPieLegend(items) }
+            legend: { display: shouldDisplayLegend(items.length) }
         };
 
         const ref = elem => pieChartRef(movies, pieType, elem);
@@ -196,12 +280,12 @@ class Graph extends Component {
     }
 }
 
-const shouldDisplayPieLegend = items => {
+const shouldDisplayLegend = numLabels => {
     // Hack to figure out whether to display legend based on screen size
     // Let's display the legend only if there are 5 or less label lines (label width is estimated)
     const labelWidth = 250;
     const screenWidth = window.screen.width;
-    const numLabelLines = items.length / (screenWidth / labelWidth);
+    const numLabelLines = numLabels / (screenWidth / labelWidth);
     return numLabelLines <= 5;
 };
 
@@ -224,46 +308,38 @@ const pieChartRef = (movies, pieType, elem) => {
     };
 };
 
-const getPieItems = (nameCount, minCount) => {
+const getChartItems = (attributeCount, minCount = -1) => {
     const items = Object
-        .keys(nameCount)
-        .map(name => {
-            return { count: nameCount[name], name }
+        .keys(attributeCount)
+        .map(attribute => {
+            return { count: attributeCount[attribute], label: attribute }
         })
-        .filter(item => item.count >= minCount);
+        .filter(item => minCount < 0 || item.count >= minCount);
 
     items.sort((a, b) => b.count - a.count);
     return items;
 };
 
-const getNameCount = (movies, pieType) => {
-    if (pieType === PIE_ACTOR) {
-        return getActorCount(movies);
-    }
-    return getDirectorCount(movies);
-};
+const getGroupedCount = (movies, attribute, groupBy) => {
+    const groups = _.groupBy(movies, groupBy)
+    Object
+        .keys(groups)
+        .forEach(key => groups[key] = getMovieAttributeCount(groups[key], attribute));
+    return groups;
+}
 
-const getDirectorCount = movies =>
-    movies.reduce((count, movie) => {
-        const director = movie.director;
-        if (!count[director]) {
-            count[director] = 0;
-        }
-        count[director]++;
-        return count;
-    }, {});
-
-const getActorCount = movies =>
-    movies.reduce((count, movie) => {
-        const actors = movie.actors;
-        actors.forEach(actor => {
-            if (!count[actor]) {
-                count[actor] = 0;
+const getMovieAttributeCount = (movies, attribute) => {
+    return movies.reduce((count, movie) => {
+        const values = Array.isArray(movie[attribute]) ? movie[attribute] : [movie[attribute]];
+        values.forEach(value => {
+            if (!count[value]) {
+                count[value] = 0;
             }
-            count[actor]++;
-        })
+            count[value]++;
+        });
         return count;
     }, {});
+}
 
 const getFilter = (pieType, name) => {
     if (pieType === PIE_ACTOR) {
@@ -284,6 +360,24 @@ const getFilteredMovies = (movies, filter) => {
         .map(movie => movie.name);
     filteredMovies.sort();
     return filteredMovies;
+};
+
+const getMonthName = number => {
+    const months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+    ];
+    return months[number - 1];
 };
 
 export default Graph;
