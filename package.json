@@ -5,6 +5,7 @@
   "dependencies": {
     "bulma": "^0.6.0",
     "chart.js": "^2.7.0",
+    "randomcolor": "^0.5.3",
     "react": "^16.0.0",
     "react-chartjs": "^0.8.0",
     "react-chartjs-2": "^2.6.4",

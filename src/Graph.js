@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Line, Doughnut } from 'react-chartjs-2';
+import * as randomColor from 'randomcolor';
 
 const
     PIE_ACTOR = 'actor',
@@ -16,7 +17,6 @@ class Graph extends Component {
     }
 
     render() {
-        const { movies } = this.props;
         return <div id="graph-container">
             {this.renderForm()}
             {this.renderPie()}
@@ -26,10 +26,10 @@ class Graph extends Component {
     renderForm() {
         return <form id="graph-config">
             <div className="field is-horizontal">
-                <div class="field-body">
-                    <div class="field">
-                        <div class="control">
-                            <div class="select">
+                <div className="field-body">
+                    <div className="field">
+                        <div className="control">
+                            <div className="select">
                                 <select onChange={this.handlePieType.bind(this)}>
                                     <option value={PIE_DIRECTOR}>Directors</option>
                                     <option value={PIE_ACTOR}>Actors</option>
@@ -37,12 +37,12 @@ class Graph extends Component {
                             </div>
                         </div>
                     </div>
-                    <div class="field">
-                        <div class="control">
-                            <div class="select">
-                                <select onChange={this.handlePieMinCount.bind(this)}>
+                    <div className="field">
+                        <div className="control">
+                            <div className="select">
+                                <select onChange={this.handlePieMinCount.bind(this)} defaultValue="2">
                                     <option value="1">At least 1</option>
-                                    <option value="2" selected>At least 2</option>
+                                    <option value="2">At least 2</option>
                                     <option value="3">At least 3</option>
                                     <option value="4">At least 4</option>
                                 </select>
@@ -50,19 +50,7 @@ class Graph extends Component {
                         </div>
                     </div>
                 </div>
-
-                
-
-                
             </div>
-
-           
-
-
-
-
-
-           
         </form>;
     }
 
@@ -78,7 +66,7 @@ class Graph extends Component {
     }
 
     handlePieMinCount(event) {
-        const value = parseInt(event.target.value);
+        const value = parseInt(event.target.value, 10);
         this.setState({ pieMinCount: value > 0 ? value : 1 });
     }
 
@@ -92,13 +80,13 @@ class Graph extends Component {
                 data: [0, 10, 5, 2, 20, 30, 45],
             }]
         };
-        const options = {};
         return <Line data={data}/>;
     }
 
     renderPie() {
         const { movies } = this.props;
         const { pieType, pieMinCount } = this.state;
+
         let nameCount;
         if (pieType === PIE_ACTOR) {
             nameCount = getActorCount(movies);
@@ -117,22 +105,16 @@ class Graph extends Component {
 
         const data = {
             datasets: [{
-                data: items.map(director => director.count)
+                data: items.map(director => director.count),
+                backgroundColor: items.map(item =>
+                    randomColor({ luminosity: 'light', count: items.count })
+                )
             }],
             labels: items.map(director => director.name)
         };
+        const options = {};
 
-        return <Doughnut data={data}/>;
-    }
-
-    getPieActorData() {
-        const { movies } = this.props;
-
-    }
-
-    getPieDirectorData() {
-        const { movies } = this.props;
-
+        return <Doughnut data={data} options={options}/>;
     }
 }
 

@@ -10,7 +10,7 @@ class App extends Component {
         this.state = {
             listId: '',
             loading: false,
-            movies: movies
+            movies: []
         };
     }
 
@@ -41,7 +41,6 @@ class App extends Component {
             return <div id="content" className="container">
                 <a className="button is-loading">Loading</a>
                 <p>Requesting data from IMDB, please be patient...</p>
-                <p>{JSON.stringify(movies)}</p>
             </div>;
         } else if (movies.length > 0) {
             return <div id="content" className="container">
@@ -53,7 +52,7 @@ class App extends Component {
     handleSubmit(event) {
         event.preventDefault();
         this.setState({ loading: true });
-        setTimeout(() => this.setState({ movies: movies, loading: false }), 1000);
+        setTimeout(() => this.setState({ movies: movies, loading: false }), 2000);
     }
 
     handleChange(event) {
