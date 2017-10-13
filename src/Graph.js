@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
 import { Line, Doughnut } from 'react-chartjs-2';
 import * as randomColor from 'randomcolor';
+import { isEqual } from 'lodash';
 
 const
     PIE_ACTOR = 'actor',
     PIE_DIRECTOR = 'director';
+
+const DEFAULT_PIE_MIN_COUNT = 2;
 
 class Graph extends Component {
     constructor(props) {
@@ -12,8 +15,13 @@ class Graph extends Component {
         this.state = {
             chartType: 'pie',
             pieType: PIE_DIRECTOR,
-            pieMinCount: 3
+            pieMinCount: DEFAULT_PIE_MIN_COUNT
         };
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        return !isEqual(this.props, nextProps) ||
+            !isEqual(this.state, nextState);
     }
 
     render() {
@@ -40,7 +48,7 @@ class Graph extends Component {
                     <div className="field">
                         <div className="control">
                             <div className="select">
-                                <select onChange={this.handlePieMinCount.bind(this)} defaultValue="2">
+                                <select onChange={this.handlePieMinCount.bind(this)} defaultValue={DEFAULT_PIE_MIN_COUNT}>
                                     <option value="1">At least 1</option>
                                     <option value="2">At least 2</option>
                                     <option value="3">At least 3</option>

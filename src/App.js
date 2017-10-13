@@ -46,18 +46,30 @@ class App extends Component {
             return <div id="content" className="container">
                 <Graph movies={movies}/>
             </div>
+        } else {
+            return <div id="content" className="container"></div>;
         }
     }
 
     handleSubmit(event) {
         event.preventDefault();
         this.setState({ loading: true });
-        setTimeout(() => this.setState({ movies: movies, loading: false }), 2000);
+        setTimeout(() => this.setState(
+            { movies: movies, loading: false },
+            () => setTimeout(scrollToContent, 100)
+        ), 2000);
     }
 
     handleChange(event) {
         this.setState({ listId: event.target.value });
     }
 }
+
+const scrollToContent = () => {
+    console.log('SCROLL');
+    document.querySelector('#content').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+};
 
 export default App;
