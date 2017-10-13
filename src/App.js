@@ -18,7 +18,7 @@ class App extends Component {
         return <div id="root-container" className="container">
             <h1 className="title">IMDB movie stats</h1>
             <p className="subtitle">
-                A graph visualisation of your IMDB lists
+                A graph visualization of your IMDB lists
             </p>
             {this.renderSearch()}
             {this.renderContent()}
