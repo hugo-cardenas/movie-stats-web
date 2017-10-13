@@ -10,7 +10,7 @@ class App extends Component {
         this.state = {
             listId: '',
             loading: false,
-            movies: []
+            movies: movies
         };
     }
 

@@ -18,8 +18,25 @@
 #content {
     margin-top: 20px;
     margin-bottom: 10px;
+    max-width: 90%;
 }
 
 #content .is-loading {
     border: 0;
+}
+
+#graph-container .tabs {
+    margin-bottom: 20px;
+}
+
+#graph-config {
+    margin-bottom: 10px;
+}
+
+#graph-config p {
+    white-space: nowrap;
+}
+
+#graph-config .field-label {
+    margin-right: 10px;
 }

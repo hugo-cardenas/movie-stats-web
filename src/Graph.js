@@ -1,7 +1,20 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom'
 import { Line, Doughnut } from 'react-chartjs-2';
 import * as randomColor from 'randomcolor';
 import { isEqual } from 'lodash';
+
+/*
+    Each label 250px
+    5 lines
+
+    Num lines = num labels / (width / 250)
+    width / (num labels * 250 / 5)
+*/
+
+const
+    CHART_PIE = 'pie',
+    CHART_TIMELINE = 'timeline';
 
 const
     PIE_ACTOR = 'actor',
@@ -13,7 +26,7 @@ class Graph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartType: 'pie',
+            chartType: CHART_PIE,
             pieType: PIE_DIRECTOR,
             pieMinCount: DEFAULT_PIE_MIN_COUNT
         };
@@ -26,12 +39,71 @@ class Graph extends Component {
 
     render() {
         return <div id="graph-container">
-            {this.renderForm()}
-            {this.renderPie()}
+            {this.renderTabs()}
+            {this.renderChartContainer()}
         </div>;
     }
 
-    renderForm() {
+    renderChartContainer() {
+        const { chartType } = this.state;
+        switch (chartType) {
+            case CHART_TIMELINE:
+                return this.renderTimeline();
+            case CHART_PIE:
+            default:
+                return this.renderPie();
+        }
+    }
+
+    renderPie() {
+        return <div id="chart-container">
+            {this.renderPieForm()}
+            {this.renderPieChart()}
+            
+        </div>;
+    }
+
+    renderTimeline() {
+        return <div id="chart-container">
+            {this.renderTimelineForm()}
+            {this.renderTimelineChart()}
+        </div>;
+    }
+
+    renderTabs() {
+        const { chartType } = this.state;
+        const tabs = [
+            {
+                type: CHART_PIE,
+                text: 'Count'
+            },
+            {
+                type: CHART_TIMELINE,
+                text: 'Timeline'
+            },
+        ]
+        return <div className="tabs is-centered">
+            <ul>
+                {tabs.map(tab => 
+                    <li 
+                        key={tab.type}
+                        className={tab.type === chartType ? 'is-active' : ''}
+                        onClick={() => this.setState({chartType: tab.type})}>
+                            <a>{tab.text}</a>
+                    </li>
+                )}
+            </ul>
+        </div>;
+    }
+
+    renderTimelineForm() {
+        return <form id="graph-config">
+            <div className="field is-horizontal">
+            </div>
+        </form>
+    }
+
+    renderPieForm() {
         return <form id="graph-config">
             <div className="field is-horizontal">
                 <div className="field-body">
@@ -45,25 +117,33 @@ class Graph extends Component {
                             </div>
                         </div>
                     </div>
-                    <div className="field">
-                        <div className="control">
-                            <div className="select">
-                                <select onChange={this.handlePieMinCount.bind(this)} defaultValue={DEFAULT_PIE_MIN_COUNT}>
-                                    <option value="1">At least 1</option>
-                                    <option value="2">At least 2</option>
-                                    <option value="3">At least 3</option>
-                                    <option value="4">At least 4</option>
-                                </select>
+
+                    <div className="field is-horizontal">
+                    
+                        <div className="field-label is-normal">
+                            <p>appearing at least</p>
+                        </div>
+                        <div className="field-body">
+                            <div className="field">
+                                <div className="control">
+                                    <div className="select">
+                                        <select onChange={this.handlePieMinCount.bind(this)} defaultValue={DEFAULT_PIE_MIN_COUNT}>
+                                            <option value="1">once</option>
+                                            <option value="2">twice</option>
+                                            <option value="3">3 times</option>
+                                            <option value="4">4 times</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    
                     </div>
+
+                    
                 </div>
             </div>
         </form>;
-    }
-
-    renderPieForm() {
-
     }
 
     handlePieType(event) {
@@ -78,7 +158,7 @@ class Graph extends Component {
         this.setState({ pieMinCount: value > 0 ? value : 1 });
     }
 
-    renderChart() {
+    renderTimelineChart() {
         const data = {
             labels: ["January", "February", "March", "April", "May", "June", "July"],
             datasets: [{
@@ -91,40 +171,77 @@ class Graph extends Component {
         return <Line data={data}/>;
     }
 
-    renderPie() {
+    renderPieChart() {
         const { movies } = this.props;
         const { pieType, pieMinCount } = this.state;
 
-        let nameCount;
-        if (pieType === PIE_ACTOR) {
-            nameCount = getActorCount(movies);
-        } else {
-            nameCount = getDirectorCount(movies);
-        }
-
-        const items = Object
-            .keys(nameCount)
-            .map(name => {
-                return { count: nameCount[name], name }
-            })
-            .filter(item => item.count >= pieMinCount);
-
-        items.sort((a, b) => b.count - a.count);
+        const nameCount = getNameCount(movies, pieType);
+        const items = getPieItems(nameCount, pieMinCount);
 
         const data = {
             datasets: [{
-                data: items.map(director => director.count),
-                backgroundColor: items.map(item =>
-                    randomColor({ luminosity: 'light', count: items.count })
-                )
+                data: items.map(item => item.count),
+                backgroundColor: items.map(item => randomColor({ luminosity: 'light', count: items.count }))
             }],
-            labels: items.map(director => director.name)
+            labels: items.map(item => item.name)
         };
-        const options = {};
 
-        return <Doughnut data={data} options={options}/>;
+        const options = {
+            legend: { display: shouldDisplayPieLegend(items) }
+        };
+
+        const ref = elem => pieChartRef(movies, pieType, elem);
+
+        return <Doughnut data={data} options={options} ref={ref}/>;
     }
 }
+
+const shouldDisplayPieLegend = items => {
+    // Hack to figure out whether to display legend based on screen size
+    // Let's display the legend only if there are 5 or less label lines (label width is estimated)
+    const labelWidth = 250;
+    const screenWidth = window.screen.width;
+    const numLabelLines = items.length / (screenWidth / labelWidth);
+    return numLabelLines <= 5;
+};
+
+const pieChartRef = (movies, pieType, elem) => {
+    if (!elem)  {
+        return;
+    }
+
+    const chart = elem.chart_instance;
+    const canvas = ReactDOM.findDOMNode(elem);
+
+    canvas.onclick = event => {
+        const activePoints = chart.getElementsAtEvent(event);
+        let name;
+        try {
+            name = activePoints[0]._model.label;
+            const movieNames = getFilteredMovies(movies, getFilter(pieType, name));
+            console.log(movieNames);
+        } catch (err) {}
+    };
+};
+
+const getPieItems = (nameCount, minCount) => {
+    const items = Object
+        .keys(nameCount)
+        .map(name => {
+            return { count: nameCount[name], name }
+        })
+        .filter(item => item.count >= minCount);
+
+    items.sort((a, b) => b.count - a.count);
+    return items;
+};
+
+const getNameCount = (movies, pieType) => {
+    if (pieType === PIE_ACTOR) {
+        return getActorCount(movies);
+    }
+    return getDirectorCount(movies);
+};
 
 const getDirectorCount = movies =>
     movies.reduce((count, movie) => {
@@ -147,5 +264,26 @@ const getActorCount = movies =>
         })
         return count;
     }, {});
+
+const getFilter = (pieType, name) => {
+    if (pieType === PIE_ACTOR) {
+        return getActorFilter(name);
+    }
+    return getDirectorFilter(name);
+};
+
+const getActorFilter = actor =>
+    movie => movie.actors.includes(actor);
+
+const getDirectorFilter = director =>
+    movie => movie.director === director;
+
+const getFilteredMovies = (movies, filter) => {
+    const filteredMovies = movies
+        .filter(filter)
+        .map(movie => movie.name);
+    filteredMovies.sort();
+    return filteredMovies;
+};
 
 export default Graph;
