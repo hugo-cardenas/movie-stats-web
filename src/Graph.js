@@ -1,33 +1,33 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import * as randomColor from 'randomcolor';
 import _ from 'lodash';
 import chroma from 'chroma-js';
 
 const
-    CHART_PIE = 'pie',
-    CHART_TIMELINE = 'timeline',
+    CHART_BAR = 'bar',    
+    CHART_DOUGHNUT = 'doughnut',
 
-    TIMELINE_ALL = 'all',
-    TIMELINE_ACTOR = 'actor',
-    TIMELINE_DIRECTOR = 'director',
+    BAR_ALL = 'all',
+    BAR_ACTOR = 'actor',
+    BAR_DIRECTOR = 'director',
 
-    PIE_ACTOR = 'actor',
-    PIE_DIRECTOR = 'director';
+    DOUGHNUT_ACTOR = 'actor',
+    DOUGHNUT_DIRECTOR = 'director';
 
-const DEFAULT_PIE_MIN_COUNT = 2;
-const DEFAULT_TIMELINE_MIN_COUNT = 4;
+const DEFAULT_DOUGHNUT_MIN_COUNT = 2;
+const DEFAULT_BAR_MIN_COUNT = 4;
 
 class Graph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartType: CHART_TIMELINE,
-            timelineType: TIMELINE_ALL,
-            timelineMinCount: DEFAULT_TIMELINE_MIN_COUNT,
-            pieType: PIE_DIRECTOR,
-            pieMinCount: DEFAULT_PIE_MIN_COUNT
+            chartType: CHART_BAR,
+            barType: BAR_ALL,
+            barMinCount: DEFAULT_BAR_MIN_COUNT,
+            doughnutType: DOUGHNUT_DIRECTOR,
+            doughnutMinCount: DEFAULT_DOUGHNUT_MIN_COUNT
         };
     }
 
@@ -46,26 +46,26 @@ class Graph extends Component {
     renderChartContainer() {
         const { chartType } = this.state;
         switch (chartType) {
-            case CHART_TIMELINE:
-                return this.renderTimeline();
-            case CHART_PIE:
+            case CHART_BAR:
+                return this.renderBar();
+            case CHART_DOUGHNUT:
             default:
-                return this.renderPie();
+                return this.renderDoughnut();
         }
     }
 
-    renderPie() {
+    renderDoughnut() {
         return <div id="chart-container">
-            {this.renderPieForm()}
-            {this.renderPieChart()}
+            {this.renderDoughnutForm()}
+            {this.renderDoughnutChart()}
             
         </div>;
     }
 
-    renderTimeline() {
+    renderBar() {
         return <div id="chart-container">
-            {this.renderTimelineForm()}
-            {this.renderTimelineChart()}
+            {this.renderBarForm()}
+            {this.renderBarChart()}
         </div>;
     }
 
@@ -73,12 +73,12 @@ class Graph extends Component {
         const { chartType } = this.state;
         const tabs = [
             {
-                type: CHART_PIE,
+                type: CHART_DOUGHNUT,
                 text: 'Count'
             },
             {
-                type: CHART_TIMELINE,
-                text: 'Timeline'
+                type: CHART_BAR,
+                text: 'Bar'
             },
         ]
         return <div className="tabs is-centered">
@@ -95,30 +95,32 @@ class Graph extends Component {
         </div>;
     }
 
-    renderTimelineForm() {
-        const { timelineType } = this.state;
-
+    renderBarForm() {
+        const { barType } = this.state;
         return <form id="graph-config">
             <div className="field is-horizontal">
                 <div className="field-body">
                     <div className="field">
                         <div className="control">
                             <div className="select">
-                                <select onChange={this.handleTimelineType.bind(this)}>
-                                    <option value={TIMELINE_ALL}>All movies</option>
-                                    <option value={TIMELINE_DIRECTOR}>By director</option>
-                                    <option value={TIMELINE_ACTOR}>By actor</option>
+                                <select 
+                                    onChange={this.handleBarType.bind(this)}
+                                    value={barType}>
+                                    <option key="doughnut-all" value={BAR_ALL}>All movies</option>
+                                    <option key="doughnut-director" value={BAR_DIRECTOR}>By director</option>
+                                    <option key="doughnut-actor" value={BAR_ACTOR}>By actor</option>
                                 </select>
                             </div>
                         </div>
                     </div>
-                    {timelineType !== TIMELINE_ALL ? this.renderTimelineFormLimit() : ''}
+                    {barType !== BAR_ALL ? this.renderBarFormLimit() : ''}
                 </div>
             </div>
         </form>;
     }
 
-    renderTimelineFormLimit() {
+    renderBarFormLimit() {
+        const { barMinCount } = this.state;
         return <div className="field is-horizontal">
             <div className="field-label is-normal">
                 <p>each with at least</p>
@@ -127,12 +129,12 @@ class Graph extends Component {
                 <div className="field">
                     <div className="control">
                         <div className="select">
-                            <select onChange={this.handleTimelineMinCount.bind(this)} 
-                                defaultValue={DEFAULT_TIMELINE_MIN_COUNT}>
-                                <option value="1">1 movie</option>
-                                <option value="2">2 movies</option>
-                                <option value="3">3 movies</option>
-                                <option value="4">4 movies</option>
+                            <select onChange={this.handleBarMinCount.bind(this)} 
+                                value={barMinCount}>
+                                <option key="doughnut-min-1" value="1">1 movie</option>
+                                <option key="doughnut-min-2" value="2">2 movies</option>
+                                <option key="doughnut-min-3" value="3">3 movies</option>
+                                <option key="doughnut-min-4" value="4">4 movies</option>
                             </select>
                         </div>
                     </div>
@@ -141,28 +143,31 @@ class Graph extends Component {
         </div>;
     }
 
-    handleTimelineType(event) {
+    handleBarType(event) {
         const type = event.target.value;
-        if ([TIMELINE_ALL, TIMELINE_DIRECTOR, TIMELINE_ACTOR].includes(type)) {
-            this.setState({ timelineType: type });
+        if ([BAR_ALL, BAR_DIRECTOR, BAR_ACTOR].includes(type)) {
+            this.setState({ barType: type });
         }
     }
 
-    handleTimelineMinCount(event) {
+    handleBarMinCount(event) {
         const value = parseInt(event.target.value, 10);
-        this.setState({ timelineMinCount: value > 0 ? value : 1 });
+        this.setState({ barMinCount: value > 0 ? value : 1 });
     }
 
-    renderPieForm() {
+    renderDoughnutForm() {
+        const { doughnutType, doughnutMinCount } = this.state;
         return <form id="graph-config">
             <div className="field is-horizontal">
                 <div className="field-body">
                     <div className="field">
                         <div className="control">
                             <div className="select">
-                                <select onChange={this.handlePieType.bind(this)}>
-                                    <option value={PIE_DIRECTOR}>Directors</option>
-                                    <option value={PIE_ACTOR}>Actors</option>
+                                <select 
+                                    onChange={this.handleDoughnutType.bind(this)}
+                                    value={doughnutType}>
+                                    <option key="doughnut-director" value={DOUGHNUT_DIRECTOR}>Directors</option>
+                                    <option key="doughnut-actor" value={DOUGHNUT_ACTOR}>Actors</option>
                                 </select>
                             </div>
                         </div>
@@ -175,12 +180,12 @@ class Graph extends Component {
                             <div className="field">
                                 <div className="control">
                                     <div className="select">
-                                        <select onChange={this.handlePieMinCount.bind(this)} 
-                                            defaultValue={DEFAULT_PIE_MIN_COUNT}>
-                                            <option value="1">once</option>
-                                            <option value="2">twice</option>
-                                            <option value="3">3 times</option>
-                                            <option value="4">4 times</option>
+                                        <select onChange={this.handleDoughnutMinCount.bind(this)} 
+                                            value={doughnutMinCount}>
+                                            <option key="doughnut-min-1" value="1">once</option>
+                                            <option key="doughnut-min-2" value="2">twice</option>
+                                            <option key="doughnut-min-3" value="3">3 times</option>
+                                            <option key="doughnut-min-4" value="4">4 times</option>
                                         </select>
                                     </div>
                                 </div>
@@ -192,27 +197,27 @@ class Graph extends Component {
         </form>;
     }
 
-    handlePieType(event) {
+    handleDoughnutType(event) {
         const type = event.target.value;
-        if ([PIE_ACTOR, PIE_DIRECTOR].includes(type)) {
-            this.setState({ pieType: type });
+        if ([DOUGHNUT_ACTOR, DOUGHNUT_DIRECTOR].includes(type)) {
+            this.setState({ doughnutType: type });
         }
     }
 
-    handlePieMinCount(event) {
+    handleDoughnutMinCount(event) {
         const value = parseInt(event.target.value, 10);
-        this.setState({ pieMinCount: value > 0 ? value : 1 });
+        this.setState({ doughnutMinCount: value > 0 ? value : 1 });
     }
 
-    renderTimelineChart() {
+    renderBarChart() {
         const { movies } = this.props;
-        const { timelineType, timelineMinCount } = this.state;
+        const { barType, barMinCount } = this.state;
 
         const monthCount = getMovieAttributeCount(movies, 'addedAtMonth');
         const labels = Object.keys(monthCount).map(value => parseInt(value, 10));
         
         let countGroups;
-        if (timelineType === TIMELINE_ALL) {
+        if (barType === BAR_ALL) {
             countGroups = {
                 ['All movies']: monthCount
             };
@@ -225,7 +230,7 @@ class Graph extends Component {
         const datasets = Object.keys(countGroups)
             .filter(groupBy => {
                 return Object.values(countGroups[groupBy])
-                    .reduce((sum, current) => sum + current) >= timelineMinCount;
+                    .reduce((sum, current) => sum + current) >= barMinCount;
             })
             .map((groupBy, i) => {
                 const color = colors[i];
@@ -254,13 +259,13 @@ class Graph extends Component {
         return <Bar data={data} options={options}/>;
     }
 
-    renderPieChart() {
+    renderDoughnutChart() {
         const { movies } = this.props;
-        const { pieType, pieMinCount } = this.state;
+        const { doughnutType, doughnutMinCount } = this.state;
 
-        const attribute = pieType === PIE_DIRECTOR ? 'director' : 'actors';
+        const attribute = doughnutType === DOUGHNUT_DIRECTOR ? 'director' : 'actors';
         const nameCount = getMovieAttributeCount(movies, attribute);
-        const items = getChartItems(nameCount, pieMinCount);
+        const items = getChartItems(nameCount, doughnutMinCount);
 
         const data = {
             datasets: [{
@@ -274,7 +279,7 @@ class Graph extends Component {
             legend: { display: shouldDisplayLegend(items.length) }
         };
 
-        const ref = elem => pieChartRef(movies, pieType, elem);
+        const ref = elem => doughnutChartRef(movies, doughnutType, elem);
 
         return <Doughnut data={data} options={options} ref={ref}/>;
     }
@@ -289,7 +294,7 @@ const shouldDisplayLegend = numLabels => {
     return numLabelLines <= 5;
 };
 
-const pieChartRef = (movies, pieType, elem) => {
+const doughnutChartRef = (movies, doughnutType, elem) => {
     if (!elem)  {
         return;
     }
@@ -302,7 +307,7 @@ const pieChartRef = (movies, pieType, elem) => {
         let name;
         try {
             name = activePoints[0]._model.label;
-            const movieNames = getFilteredMovies(movies, getFilter(pieType, name));
+            const movieNames = getFilteredMovies(movies, getFilter(doughnutType, name));
             console.log(movieNames);
         } catch (err) {}
     };
@@ -319,6 +324,16 @@ const getChartItems = (attributeCount, minCount = -1) => {
     items.sort((a, b) => b.count - a.count);
     return items;
 };
+
+const getGroupedActorCount = (movies, attribute) => {
+    // We need to make actor a single attribute per movie
+    const moviesByActor = {};
+    movies.forEach(movie =>
+        movie.actors.forEach(actor => {
+
+        })
+    );
+}
 
 const getGroupedCount = (movies, attribute, groupBy) => {
     const groups = _.groupBy(movies, groupBy)
@@ -341,8 +356,8 @@ const getMovieAttributeCount = (movies, attribute) => {
     }, {});
 }
 
-const getFilter = (pieType, name) => {
-    if (pieType === PIE_ACTOR) {
+const getFilter = (doughnutType, name) => {
+    if (doughnutType === DOUGHNUT_ACTOR) {
         return getActorFilter(name);
     }
     return getDirectorFilter(name);
