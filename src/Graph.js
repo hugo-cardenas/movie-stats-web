@@ -6,7 +6,7 @@ import _ from 'lodash';
 import chroma from 'chroma-js';
 
 const
-    CHART_BAR = 'bar',    
+    CHART_BAR = 'bar',
     CHART_DOUGHNUT = 'doughnut',
 
     BAR_ALL = 'all',
@@ -24,7 +24,7 @@ class Graph extends Component {
         super(props);
         this.state = {
             chartType: CHART_BAR,
-            barType: BAR_ALL,
+            barType: BAR_ACTOR,
             barMinCount: DEFAULT_BAR_MIN_COUNT,
             doughnutType: DOUGHNUT_DIRECTOR,
             doughnutMinCount: DEFAULT_DOUGHNUT_MIN_COUNT
@@ -113,17 +113,46 @@ class Graph extends Component {
                             </div>
                         </div>
                     </div>
-                    {barType !== BAR_ALL ? this.renderBarFormLimit() : ''}
+                    {/* {barType !== BAR_ALL ? this.renderBarFormNameFilter() : ''} */}
+                    {barType !== BAR_ALL ? this.renderBarFormCountFilter() : ''}
                 </div>
             </div>
         </form>;
     }
 
-    renderBarFormLimit() {
+    renderBarFormNameFilter() {
+        const { barMinCount } = this.state;
+        const { movies } = this.props;
+        const actors = getActorNames(movies);
+        actors.sort();
+
+        return <div className="field is-horizontal">
+            <div className="field-label is-normal">
+                <p>with the name</p>
+            </div>
+            <div className="field-body">
+                <div className="field">
+                    <div className="control">
+                        <div className="select">
+                            <select
+                                >
+                                <option key={"doughnut-actor-any"} value="any">any</option>
+                                {actors.map(actor => 
+                                    <option key={"doughnut-actor" + actor} value={actor}>{actor}</option>
+                                )}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>;
+    }
+
+    renderBarFormCountFilter() {
         const { barMinCount } = this.state;
         return <div className="field is-horizontal">
             <div className="field-label is-normal">
-                <p>each with at least</p>
+                <p>with at least</p>
             </div>
             <div className="field-body">
                 <div className="field">
@@ -213,35 +242,25 @@ class Graph extends Component {
         const { movies } = this.props;
         const { barType, barMinCount } = this.state;
 
-        const monthCount = getMovieAttributeCount(movies, 'addedAtMonth');
+        const monthCount = getGroupedMovies(movies, 'addedAtMonth', true);
         const labels = Object.keys(monthCount).map(value => parseInt(value, 10));
-        
-        let countGroups;
-        if (barType === BAR_ALL) {
-            countGroups = {
-                ['All movies']: monthCount
-            };
-        } else {
-            countGroups = getGroupedCount(movies, 'addedAtMonth', 'director');
-        }
-        // TODO Support for actors
-        const colors = randomColor({count: Object.keys(countGroups).length});
-        
-        const datasets = Object.keys(countGroups)
+        const groupedCount = getBarGroupedCount(movies, barType);
+        const colors = randomColor({ count: Object.keys(groupedCount).length });
+
+        const datasets = Object.keys(groupedCount)
             .filter(groupBy => {
-                return Object.values(countGroups[groupBy])
+                return Object.values(groupedCount[groupBy])
                     .reduce((sum, current) => sum + current) >= barMinCount;
             })
             .map((groupBy, i) => {
                 const color = colors[i];
                 return {
                     label: groupBy,
-                    data: labels.map(label => countGroups[groupBy][label] ? countGroups[groupBy][label] : 0),
+                    data: labels.map(label => groupedCount[groupBy][label] ? groupedCount[groupBy][label] : 0),
                     borderColor: chroma(color).css(),
                     backgroundColor: chroma(color).css()
                 }
             });
-
 
         const data = {
             labels: labels.map(getMonthName),
@@ -250,12 +269,9 @@ class Graph extends Component {
         const options = {
             legend: {
                 display: shouldDisplayLegend(datasets.length),
-                onClick: (e, legendItem) => {
-
-                }
+                onClick: (e, legendItem) => {}
             }
         };
-
         return <Bar data={data} options={options}/>;
     }
 
@@ -264,7 +280,7 @@ class Graph extends Component {
         const { doughnutType, doughnutMinCount } = this.state;
 
         const attribute = doughnutType === DOUGHNUT_DIRECTOR ? 'director' : 'actors';
-        const nameCount = getMovieAttributeCount(movies, attribute);
+        const nameCount = getGroupedMovies(movies, attribute, true);
         const items = getChartItems(nameCount, doughnutMinCount);
 
         const data = {
@@ -313,6 +329,24 @@ const doughnutChartRef = (movies, doughnutType, elem) => {
     };
 };
 
+const getBarGroupedCount = (movies, type) => {
+    switch (type) {
+        case BAR_DIRECTOR:
+            return _.mapValues(getGroupedMovies(movies, 'director'), movies =>
+                getGroupedMovies(movies, 'addedAtMonth', true)
+            );
+        case BAR_ACTOR:
+            return _.mapValues(getGroupedMovies(movies, 'actors'), movies =>
+                getGroupedMovies(movies, 'addedAtMonth', true)
+            );
+        case BAR_ALL:
+        default:
+            return {
+                ['All movies']: getGroupedMovies(movies, 'addedAtMonth', true)
+            };
+    }
+}
+
 const getChartItems = (attributeCount, minCount = -1) => {
     const items = Object
         .keys(attributeCount)
@@ -325,36 +359,24 @@ const getChartItems = (attributeCount, minCount = -1) => {
     return items;
 };
 
-const getGroupedActorCount = (movies, attribute) => {
-    // We need to make actor a single attribute per movie
-    const moviesByActor = {};
-    movies.forEach(movie =>
-        movie.actors.forEach(actor => {
-
-        })
-    );
-}
-
-const getGroupedCount = (movies, attribute, groupBy) => {
-    const groups = _.groupBy(movies, groupBy)
-    Object
-        .keys(groups)
-        .forEach(key => groups[key] = getMovieAttributeCount(groups[key], attribute));
-    return groups;
-}
-
-const getMovieAttributeCount = (movies, attribute) => {
-    return movies.reduce((count, movie) => {
-        const values = Array.isArray(movie[attribute]) ? movie[attribute] : [movie[attribute]];
+const getGroupedMovies = (movies, groupBy, getCount = false) => {
+    const groupedMovies = {};
+    movies.forEach(movie => {
+        movie.groupBy
+        const values = Array.isArray(movie[groupBy]) ? movie[groupBy] : [movie[groupBy]];
         values.forEach(value => {
-            if (!count[value]) {
-                count[value] = 0;
+            if (!groupedMovies[value]) {
+                groupedMovies[value] = [];
             }
-            count[value]++;
-        });
-        return count;
-    }, {});
-}
+            groupedMovies[value].push(movie);
+        })
+    });
+
+    if (getCount) {
+        return _.mapValues(groupedMovies, subgroup => subgroup.length)
+    }
+    return groupedMovies;
+};
 
 const getFilter = (doughnutType, name) => {
     if (doughnutType === DOUGHNUT_ACTOR) {
@@ -362,6 +384,10 @@ const getFilter = (doughnutType, name) => {
     }
     return getDirectorFilter(name);
 };
+
+const getActorNames = movies => {
+    return _.uniq([].concat(...movies.map(movie => movie.actors)));
+}
 
 const getActorFilter = actor =>
     movie => movie.actors.includes(actor);
