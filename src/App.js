@@ -1,16 +1,29 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import Graph from './Graph';
 import 'bulma/css/bulma.css'
 import './App.css';
 import movies from './api-response';
 
+const
+    API_URL = 'https://wt-64e56b26449d9068a9bf156935aa343d-0.run.webtask.io/movie-stats';
+
+const
+    STATUS_NONE = 'none',
+    STATUS_LOADING = 'loading',
+    STATUS_LOADED = 'loaded',
+    STATUS_LOADED_EMPTY = 'loaded-empty',
+    STATUS_NOT_FOUND = 'not-found',
+    STATUS_ERROR = 'error';
+
 class App extends Component {
     constructor() {
         super();
         this.state = {
+            error: null,
             listId: '',
-            loading: false,
-            movies: []
+            movies: [],
+            status: STATUS_NONE
         };
     }
 
@@ -36,28 +49,65 @@ class App extends Component {
     }
 
     renderContent() {
-        const { loading, movies } = this.state;
-        if (loading) {
-            return <div id="content" className="container">
-                <a className="button is-loading">Loading</a>
-                <p>Requesting data from IMDB, please be patient...</p>
-            </div>;
-        } else if (movies.length > 0) {
-            return <div id="content" className="container">
-                <Graph movies={movies}/>
-            </div>
-        } else {
-            return <div id="content" className="container"></div>;
+        const { error, movies, status } = this.state;
+        switch (status) {
+            case STATUS_ERROR:
+                return <div id="content" className="container">
+                    <div className="error notification">
+                        <p className="notification-title">Oops, this is embarrasing...</p>
+                        <p className="notification-details">{error.message}</p>
+                    </div>
+                </div>;
+            case STATUS_LOADING:
+                return <div id="content" className="container">
+                    <a className="button is-loading">Loading</a>
+                    <p>Requesting data from IMDB, please be patient...</p>
+                </div>;
+            case STATUS_NOT_FOUND:
+                return <div id="content" className="container">
+                    <div className="notification">
+                        <p className="notification-title">Sorry, no results</p>
+                        <p className="notification-details">Could not find a list with the specified id</p>
+                        <p className="notification-details">Please check that the id is correct and the list has public visibility</p>
+                    </div>
+                </div>;
+            case STATUS_LOADED:
+                return <div id="content" className="container">
+                    <Graph movies={movies}/>
+                </div>;
+            case STATUS_NONE:
+            default:
+                return <div id="content" className="container"></div>;
         }
     }
 
-    handleSubmit(event) {
+    async handleSubmit(event) {
+        const { listId } = this.state;
         event.preventDefault();
-        this.setState({ loading: true });
-        setTimeout(() => this.setState(
-            { movies: movies, loading: false },
-            () => setTimeout(scrollToContent, 100)
-        ), 2000);
+        if (!listId) return;
+
+        this.setState({ status: STATUS_LOADING });
+        try {
+            const response = await fetchApiMovies(listId);
+            this.setState({ movies: response.data, status: STATUS_LOADED },
+                () => setTimeout(scrollToContent, 100)
+            );
+        } catch (error) {
+            if (error.response) {
+                const status = error.response.status;
+                if (status === 400) {
+                    this.setState({ status: STATUS_NOT_FOUND });
+                    return;         
+                }       
+            }
+            console.log(error.response);
+            this.setState({ error, status: STATUS_ERROR });
+        }
+
+        // setTimeout(() => this.setState(
+        //     { movies: movies, loading: false },
+        //     () => setTimeout(scrollToContent, 100)
+        // ), 2000);
     }
 
     handleChange(event) {
@@ -66,9 +116,12 @@ class App extends Component {
 }
 
 const scrollToContent = () => {
-    document.querySelector('#content').scrollIntoView({ 
-        behavior: 'smooth' 
+    document.querySelector('#content').scrollIntoView({
+        behavior: 'smooth'
     });
 };
+
+const fetchApiMovies = listId =>
+    axios.get(API_URL + '?listId=' + encodeURIComponent(listId), {responseType: 'json'});
 
 export default App;

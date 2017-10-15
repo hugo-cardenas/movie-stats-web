@@ -26,6 +26,18 @@
     border: 0;
 }
 
+.error .notification-title {
+    color: red;
+}   
+
+.notification-title {
+    font-weight: bold;
+}
+
+.notification-details {
+    font-size: 13px;
+}
+
 #graph-container .tabs {
     margin-bottom: 20px;
 }
