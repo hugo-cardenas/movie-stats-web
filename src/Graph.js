@@ -23,8 +23,8 @@ class Graph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartType: CHART_BAR,
-            barType: BAR_ACTOR,
+            chartType: CHART_DOUGHNUT,
+            barType: BAR_ALL,
             barMinCount: DEFAULT_BAR_MIN_COUNT,
             doughnutType: DOUGHNUT_DIRECTOR,
             doughnutMinCount: DEFAULT_DOUGHNUT_MIN_COUNT
@@ -135,7 +135,6 @@ class Graph extends Component {
     }
 
     renderBarFormNameFilter() {
-        const { barMinCount } = this.state;
         const { movies } = this.props;
         const actors = getActorNames(movies);
         actors.sort();
@@ -353,9 +352,13 @@ const chartRef = (movies, chartType, dataType, elem) => {
                 filter = getFilter(dataType, name);
             }
 
-            const movieNames = getFilteredMovies(movies, filter);
+            let movieNames = getFilteredMovies(movies, filter);
             if (movieNames.length < 1) throw new Error();
 
+            if (movieNames.length > 15) {
+                movieNames = movieNames.slice(0, 15);
+                movieNames.push('...');
+            }
             const tooltip = document.getElementById('movie-tooltip');
             tooltip.innerHTML = '';
             movieNames
@@ -388,7 +391,7 @@ const getBarGroupedCount = (movies, type) => {
         case BAR_ALL:
         default:
             return {
-                ['All movies']: getGroupedMovies(movies, 'addedAtMonth', true)
+                'All movies': getGroupedMovies(movies, 'addedAtMonth', true)
             };
     }
 }
@@ -396,7 +399,6 @@ const getBarGroupedCount = (movies, type) => {
 const getGroupedMovies = (movies, groupBy, getCount = false) => {
     const groupedMovies = {};
     movies.forEach(movie => {
-        movie.groupBy
         const values = Array.isArray(movie[groupBy]) ? movie[groupBy] : [movie[groupBy]];
         values.forEach(value => {
             if (!groupedMovies[value]) {
