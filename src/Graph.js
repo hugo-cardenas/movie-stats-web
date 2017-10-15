@@ -38,9 +38,23 @@ class Graph extends Component {
 
     render() {
         return <div id="graph-container">
+            <div id="movie-tooltip" className="hidden"></div>
             {this.renderTabs()}
             {this.renderChartContainer()}
         </div>;
+    }
+
+    componentDidMount() {
+        // const tip = tippy('#movie-tooltip');
+        // const elem = document.querySelector('#movie-tooltip');
+        // const popper = tip.getPopperElement(elem);
+        // tip.show(popper);
+
+        // console.log('MOUNTED');
+        // const obj = tippy('.tabs', {
+        //     // trigger: 'manual'
+        // });
+        // obj.show();
     }
 
     renderChartContainer() {
@@ -78,7 +92,7 @@ class Graph extends Component {
             },
             {
                 type: CHART_BAR,
-                text: 'Bar'
+                text: 'Timeline'
             },
         ]
         return <div className="tabs is-centered">
@@ -272,7 +286,10 @@ class Graph extends Component {
                 onClick: (e, legendItem) => {}
             }
         };
-        return <Bar data={data} options={options}/>;
+
+        const ref = elem => chartRef(movies, CHART_BAR, barType, elem);
+
+        return <Bar data={data} options={options} ref={ref}/>;
     }
 
     renderDoughnutChart() {
@@ -280,8 +297,8 @@ class Graph extends Component {
         const { doughnutType, doughnutMinCount } = this.state;
 
         const attribute = doughnutType === DOUGHNUT_DIRECTOR ? 'director' : 'actors';
-        const nameCount = getGroupedMovies(movies, attribute, true);
-        const items = getChartItems(nameCount, doughnutMinCount);
+        const count = getGroupedMovies(movies, attribute, true);
+        const items = getChartItems(count, doughnutMinCount);
 
         const data = {
             datasets: [{
@@ -295,7 +312,7 @@ class Graph extends Component {
             legend: { display: shouldDisplayLegend(items.length) }
         };
 
-        const ref = elem => doughnutChartRef(movies, doughnutType, elem);
+        const ref = elem => chartRef(movies, CHART_DOUGHNUT, doughnutType, elem);
 
         return <Doughnut data={data} options={options} ref={ref}/>;
     }
@@ -310,23 +327,52 @@ const shouldDisplayLegend = numLabels => {
     return numLabelLines <= 5;
 };
 
-const doughnutChartRef = (movies, doughnutType, elem) => {
-    if (!elem)  {
-        return;
-    }
-
+const chartRef = (movies, chartType, dataType, elem) => {
+    if (!elem)  return;
     const chart = elem.chart_instance;
     const canvas = ReactDOM.findDOMNode(elem);
 
-    canvas.onclick = event => {
-        const activePoints = chart.getElementsAtEvent(event);
-        let name;
+    canvas.onmousemove = event => {
         try {
-            name = activePoints[0]._model.label;
-            const movieNames = getFilteredMovies(movies, getFilter(doughnutType, name));
-            console.log(movieNames);
-        } catch (err) {}
+            const element = chart.getElementAtEvent(event)[0];
+            if (!element) throw new Error();
+
+            let filter;
+            if (chartType === CHART_BAR) {
+                const date = getLabelDate(chart.data.labels[element._index]);
+                const name = chart.data.datasets[element._datasetIndex].label;
+                if (dataType === BAR_ALL) {
+                    filter = movie => movie.addedAtMonth === date;
+                } else if (dataType === BAR_DIRECTOR) {
+                    filter = movie => movie.addedAtMonth === date && movie.director === name;
+                } else {
+                    filter = movie => movie.addedAtMonth === date && movie.actors.includes(name);
+                }
+            } else {
+                const name = chart.data.labels[element._index];
+                filter = getFilter(dataType, name);
+            }
+
+            const movieNames = getFilteredMovies(movies, filter);
+            if (movieNames.length < 1) throw new Error();
+
+            const tooltip = document.getElementById('movie-tooltip');
+            tooltip.innerHTML = '';
+            movieNames
+                .map(name => createHtmlElement('p', name))
+                .forEach(elem => document.getElementById('movie-tooltip').appendChild(elem));
+            tooltip.classList.remove('hidden');
+
+        } catch (err) {
+            document.getElementById('movie-tooltip').classList.add('hidden');
+        }
     };
+};
+
+const createHtmlElement = (tag, text) => {
+    const element = document.createElement(tag);
+    element.innerHTML = text;
+    return element;
 };
 
 const getBarGroupedCount = (movies, type) => {
@@ -347,18 +393,6 @@ const getBarGroupedCount = (movies, type) => {
     }
 }
 
-const getChartItems = (attributeCount, minCount = -1) => {
-    const items = Object
-        .keys(attributeCount)
-        .map(attribute => {
-            return { count: attributeCount[attribute], label: attribute }
-        })
-        .filter(item => minCount < 0 || item.count >= minCount);
-
-    items.sort((a, b) => b.count - a.count);
-    return items;
-};
-
 const getGroupedMovies = (movies, groupBy, getCount = false) => {
     const groupedMovies = {};
     movies.forEach(movie => {
@@ -378,6 +412,18 @@ const getGroupedMovies = (movies, groupBy, getCount = false) => {
     return groupedMovies;
 };
 
+const getChartItems = (attributeCount, minCount = -1) => {
+    const items = Object
+        .keys(attributeCount)
+        .map(attribute => {
+            return { count: attributeCount[attribute], label: attribute }
+        })
+        .filter(item => minCount < 0 || item.count >= minCount);
+
+    items.sort((a, b) => b.count - a.count);
+    return items;
+};
+
 const getFilter = (doughnutType, name) => {
     if (doughnutType === DOUGHNUT_ACTOR) {
         return getActorFilter(name);
@@ -385,9 +431,8 @@ const getFilter = (doughnutType, name) => {
     return getDirectorFilter(name);
 };
 
-const getActorNames = movies => {
-    return _.uniq([].concat(...movies.map(movie => movie.actors)));
-}
+const getActorNames = movies =>
+    _.uniq([].concat(...movies.map(movie => movie.actors)));
 
 const getActorFilter = actor =>
     movie => movie.actors.includes(actor);
@@ -403,22 +448,23 @@ const getFilteredMovies = (movies, filter) => {
     return filteredMovies;
 };
 
-const getMonthName = number => {
-    const months = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ];
-    return months[number - 1];
-};
+const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+];
+
+const getLabelDate = label => months.indexOf(label) + 1;
+
+const getMonthName = number => months[number - 1];
 
 export default Graph;

@@ -11,7 +11,8 @@
     margin-top: 50px;
 }
 
-#search, #graph-config {
+#search,
+#graph-config {
     display: inline-block;
 }
 
@@ -39,4 +40,32 @@
 
 #graph-config .field-label {
     margin-right: 10px;
+}
+
+#movie-tooltip {
+    position: absolute;
+    visibility: hidden;
+}
+
+@media screen and (min-width: 800px) {
+    #movie-tooltip {
+        visibility: visible;
+        right: 0px;
+        top: 235px;
+        padding: 5px 7px;
+        font-size: 12px;
+        text-align: left;
+        color: white;
+        background-color: black;
+        opacity: 0.8;
+        border-radius: 7px;
+    }
+
+    #movie-tooltip p {
+        width: 165px;
+    }
+
+    #movie-tooltip.hidden {
+        visibility: hidden;
+    }
 }

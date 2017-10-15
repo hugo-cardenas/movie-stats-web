@@ -66,7 +66,6 @@ class App extends Component {
 }
 
 const scrollToContent = () => {
-    console.log('SCROLL');
     document.querySelector('#content').scrollIntoView({ 
         behavior: 'smooth' 
     });
