@@ -25,8 +25,8 @@ class App extends Component {
             movies: [],
             status: STATUS_NONE
         };
-        this.state.movies = movies;
-        this.state.status = STATUS_LOADED;
+        // this.state.movies = movies;
+        // this.state.status = STATUS_LOADED;
     }
 
     render() {
