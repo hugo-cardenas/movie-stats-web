@@ -25,6 +25,8 @@ class App extends Component {
             movies: [],
             status: STATUS_NONE
         };
+        this.state.movies = movies;
+        this.state.status = STATUS_LOADED;
     }
 
     render() {
@@ -71,6 +73,13 @@ class App extends Component {
                         <p className="notification-details">Please check that the id is correct and the list has public visibility</p>
                     </div>
                 </div>;
+            case STATUS_LOADED_EMPTY:
+                return <div id="content" className="container">
+                    <div className="notification">
+                        <p className="notification-title">This list is empty</p>
+                        <p className="notification-details">Add some movies to it or search a different list</p>
+                    </div>
+                </div>;
             case STATUS_LOADED:
                 return <div id="content" className="container">
                     <Graph movies={movies}/>
@@ -89,9 +98,14 @@ class App extends Component {
         this.setState({ status: STATUS_LOADING });
         try {
             const response = await fetchApiMovies(listId);
-            this.setState({ movies: response.data, status: STATUS_LOADED },
-                () => setTimeout(scrollToContent, 100)
-            );
+            const movies = response.data;
+            if (movies.length > 0) {
+                this.setState({ movies, status: STATUS_LOADED },
+                    () => setTimeout(scrollToContent, 100)
+                );
+            } else {
+                this.setState({ status: STATUS_LOADED_EMPTY });
+            }
         } catch (error) {
             if (error.response) {
                 const status = error.response.status;
@@ -100,14 +114,8 @@ class App extends Component {
                     return;         
                 }       
             }
-            console.log(error.response);
             this.setState({ error, status: STATUS_ERROR });
-        }
-
-        // setTimeout(() => this.setState(
-        //     { movies: movies, loading: false },
-        //     () => setTimeout(scrollToContent, 100)
-        // ), 2000);
+        }        
     }
 
     handleChange(event) {

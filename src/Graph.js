@@ -44,45 +44,6 @@ class Graph extends Component {
         </div>;
     }
 
-    componentDidMount() {
-        // const tip = tippy('#movie-tooltip');
-        // const elem = document.querySelector('#movie-tooltip');
-        // const popper = tip.getPopperElement(elem);
-        // tip.show(popper);
-
-        // console.log('MOUNTED');
-        // const obj = tippy('.tabs', {
-        //     // trigger: 'manual'
-        // });
-        // obj.show();
-    }
-
-    renderChartContainer() {
-        const { chartType } = this.state;
-        switch (chartType) {
-            case CHART_BAR:
-                return this.renderBar();
-            case CHART_DOUGHNUT:
-            default:
-                return this.renderDoughnut();
-        }
-    }
-
-    renderDoughnut() {
-        return <div id="chart-container">
-            {this.renderDoughnutForm()}
-            {this.renderDoughnutChart()}
-            
-        </div>;
-    }
-
-    renderBar() {
-        return <div id="chart-container">
-            {this.renderBarForm()}
-            {this.renderBarChart()}
-        </div>;
-    }
-
     renderTabs() {
         const { chartType } = this.state;
         const tabs = [
@@ -101,11 +62,42 @@ class Graph extends Component {
                     <li 
                         key={tab.type}
                         className={tab.type === chartType ? 'is-active' : ''}
-                        onClick={() => this.setState({chartType: tab.type})}>
+                        onClick={this.switchToTab.bind(this, tab.type)}>
                             <a>{tab.text}</a>
                     </li>
                 )}
             </ul>
+        </div>;
+    }
+
+    switchToTab(type) {
+        this.setState({ chartType: type },
+            () => document.querySelector('#content').scrollIntoView()
+        );
+    }
+
+    renderChartContainer() {
+        const { chartType } = this.state;
+        switch (chartType) {
+            case CHART_BAR:
+                return this.renderBar();
+            case CHART_DOUGHNUT:
+            default:
+                return this.renderDoughnut();
+        }
+    }
+
+    renderBar() {
+        return <div id="chart-container">
+            {this.renderBarForm()}
+            {this.renderBarChart()}
+        </div>;
+    }
+
+    renderDoughnut() {
+        return <div id="chart-container">
+            {this.renderDoughnutForm()}
+            {this.renderDoughnutChart()}
         </div>;
     }
 
@@ -127,38 +119,10 @@ class Graph extends Component {
                             </div>
                         </div>
                     </div>
-                    {/* {barType !== BAR_ALL ? this.renderBarFormNameFilter() : ''} */}
                     {barType !== BAR_ALL ? this.renderBarFormCountFilter() : ''}
                 </div>
             </div>
         </form>;
-    }
-
-    renderBarFormNameFilter() {
-        const { movies } = this.props;
-        const actors = getActorNames(movies);
-        actors.sort();
-
-        return <div className="field is-horizontal">
-            <div className="field-label is-normal">
-                <p>with the name</p>
-            </div>
-            <div className="field-body">
-                <div className="field">
-                    <div className="control">
-                        <div className="select">
-                            <select
-                                >
-                                <option key={"doughnut-actor-any"} value="any">any</option>
-                                {actors.map(actor => 
-                                    <option key={"doughnut-actor" + actor} value={actor}>{actor}</option>
-                                )}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>;
     }
 
     renderBarFormCountFilter() {
