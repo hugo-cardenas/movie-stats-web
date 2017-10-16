@@ -3,13 +3,12 @@ import axios from 'axios';
 import Graph from './Graph';
 import 'bulma/css/bulma.css'
 import './App.css';
-import movies from './api-response';
 
 const
     API_URL = 'https://wt-64e56b26449d9068a9bf156935aa343d-0.run.webtask.io/movie-stats';
 
 const
-    STATUS_NONE = 'none',
+    STATUS_BLANK = 'blank',
     STATUS_LOADING = 'loading',
     STATUS_LOADED = 'loaded',
     STATUS_LOADED_EMPTY = 'loaded-empty',
@@ -23,10 +22,8 @@ class App extends Component {
             error: null,
             listId: '',
             movies: [],
-            status: STATUS_NONE
+            status: STATUS_BLANK
         };
-        // this.state.movies = movies;
-        // this.state.status = STATUS_LOADED;
     }
 
     render() {
@@ -84,7 +81,7 @@ class App extends Component {
                 return <div id="content" className="container">
                     <Graph movies={movies}/>
                 </div>;
-            case STATUS_NONE:
+            case STATUS_BLANK:
             default:
                 return <div id="content" className="container"></div>;
         }

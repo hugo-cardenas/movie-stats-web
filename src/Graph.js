@@ -216,31 +216,33 @@ class Graph extends Component {
     }
 
     renderBarChart() {
-        const { movies } = this.props;
+        const movies = getMoviesWithDateInfo(this.props.movies);
         const { barType, barMinCount } = this.state;
 
-        const monthCount = getGroupedMovies(movies, 'addedAtMonth', true);
-        const labels = Object.keys(monthCount).map(value => parseInt(value, 10));
+        const monthCount = getGroupedMovies(movies, 'createdAtYearMonth', true);
+        const yearMonthValues = Object.keys(monthCount);
+        yearMonthValues.sort();
+        
         const groupedCount = getBarGroupedCount(movies, barType);
         const colors = randomColor({ count: Object.keys(groupedCount).length });
 
         const datasets = Object.keys(groupedCount)
-            .filter(groupBy => {
-                return Object.values(groupedCount[groupBy])
+            .filter(yearMonth => {
+                return Object.values(groupedCount[yearMonth])
                     .reduce((sum, current) => sum + current) >= barMinCount;
             })
             .map((groupBy, i) => {
                 const color = colors[i];
                 return {
                     label: groupBy,
-                    data: labels.map(label => groupedCount[groupBy][label] ? groupedCount[groupBy][label] : 0),
+                    data: yearMonthValues.map(label => groupedCount[groupBy][label] ? groupedCount[groupBy][label] : 0),
                     borderColor: chroma(color).css(),
                     backgroundColor: chroma(color).css()
                 }
             });
 
         const data = {
-            labels: labels.map(getMonthName),
+            labels: yearMonthValues.map(getLabelDate),
             datasets
         };
         const options = {
@@ -299,24 +301,26 @@ const chartRef = (movies, chartType, dataType, elem) => {
         try {
             const element = chart.getElementAtEvent(event)[0];
             if (!element) throw new Error();
-
+            
             let filter;
             if (chartType === CHART_BAR) {
-                const date = getLabelDate(chart.data.labels[element._index]);
+                const labelDate = chart.data.labels[element._index];
                 const name = chart.data.datasets[element._datasetIndex].label;
+                const dateFilter = movie => movie.createdAtYearMonth === getYearMonthDate(labelDate);
+                
                 if (dataType === BAR_ALL) {
-                    filter = movie => movie.addedAtMonth === date;
+                    filter = dateFilter;
                 } else if (dataType === BAR_DIRECTOR) {
-                    filter = movie => movie.addedAtMonth === date && movie.director === name;
+                    filter = movie => dateFilter(movie) && getDirectorFilter(name)(movie);
                 } else {
-                    filter = movie => movie.addedAtMonth === date && movie.actors.includes(name);
+                    filter = movie => dateFilter(movie) && getActorFilter(name)(movie);
                 }
             } else {
                 const name = chart.data.labels[element._index];
                 filter = getFilter(dataType, name);
             }
 
-            let movieNames = getFilteredMovies(movies, filter);
+            let movieNames = getFilteredMovieNames(movies, filter);
             if (movieNames.length < 1) throw new Error();
 
             if (movieNames.length > 15) {
@@ -346,19 +350,19 @@ const getBarGroupedCount = (movies, type) => {
     switch (type) {
         case BAR_DIRECTOR:
             return _.mapValues(getGroupedMovies(movies, 'director'), movies =>
-                getGroupedMovies(movies, 'addedAtMonth', true)
+                getGroupedMovies(movies, 'createdAtYearMonth', true)
             );
         case BAR_ACTOR:
             return _.mapValues(getGroupedMovies(movies, 'actors'), movies =>
-                getGroupedMovies(movies, 'addedAtMonth', true)
+                getGroupedMovies(movies, 'createdAtYearMonth', true)
             );
         case BAR_ALL:
         default:
             return {
-                'All movies': getGroupedMovies(movies, 'addedAtMonth', true)
+                'All movies': getGroupedMovies(movies, 'createdAtYearMonth', true)
             };
     }
-}
+};
 
 const getGroupedMovies = (movies, groupBy, getCount = false) => {
     const groupedMovies = {};
@@ -406,7 +410,7 @@ const getActorFilter = actor =>
 const getDirectorFilter = director =>
     movie => movie.director === director;
 
-const getFilteredMovies = (movies, filter) => {
+const getFilteredMovieNames = (movies, filter) => {
     const filteredMovies = movies
         .filter(filter)
         .map(movie => movie.name);
@@ -414,23 +418,48 @@ const getFilteredMovies = (movies, filter) => {
     return filteredMovies;
 };
 
+const getMoviesWithDateInfo = movies => {
+    return movies.map(movie => {
+        const date = new Date(movie.createdAt * 1000);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        return {
+            ...movie,
+           createdAtYearMonth: `${year} - ${monthNumberToString(month)}`
+        };
+    });
+};
+
+const monthNumberToString = month => 
+    month < 10 ? `0${month}` : month;
+
 const months = [
-    'January',
-    'February',
-    'March',
-    'April',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
     'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
 ];
 
-const getLabelDate = label => months.indexOf(label) + 1;
+const getMonthNumber = monthName => months.indexOf(monthName) + 1;
 
-const getMonthName = number => months[number - 1];
+const getMonthName = monthNumber => months[monthNumber - 1];
+
+const getLabelDate = yearMonthDate => {
+    const parts = yearMonthDate.split(' - ');
+    return `${getMonthName(parts[1])} ${parts[0]}`;
+};
+
+const getYearMonthDate = labelDate => {
+    const parts = labelDate.split(' ');
+    return `${parts[1]} - ${monthNumberToString(getMonthNumber(parts[0]))}`;
+};
 
 export default Graph;
