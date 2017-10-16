@@ -1,3 +1,3 @@
 # movie-stats-web
 
-Website which consumes movie-stats API and shows customizable graphs.
+Graph visualization of your IMDb movie lists
