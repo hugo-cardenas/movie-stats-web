@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import tippy from 'tippy.js';
 import Graph from './Graph';
-import 'bulma/css/bulma.css'
+import 'bulma/css/bulma.css';
+import 'tippy.js/dist/tippy.css';
 import './App.css';
 
 const
@@ -28,9 +30,9 @@ class App extends Component {
 
     render() {
         return <div id="root-container" className="container">
-            <h1 className="title">IMDB movie stats</h1>
+            <h1 className="title">IMDb movie stats</h1>
             <p className="subtitle">
-                A graph visualization of your IMDB lists
+                A graph visualization of your IMDb lists
             </p>
             {this.renderSearch()}
             {this.renderContent()}
@@ -39,12 +41,29 @@ class App extends Component {
 
     renderSearch() {
         return <form id="search" onSubmit={this.handleSubmit.bind(this)}>
-            <div className="control">
+            <div className="control has-icons-right">
                 <input 
                     className="input" 
-                    type="text" placeholder="Input IMDB list id" onChange={this.handleChange.bind(this)}/>
-            </div>
+                    type="text" placeholder="Input IMDb list id" onChange={this.handleChange.bind(this)}/>
+                {this.renderQuestionIcon()}    
+            </div>            
         </form>;
+    }
+
+    renderQuestionIcon() {
+        const { listId } = this.state;
+        if (listId !== '') {
+            return '';
+        }
+        return <span 
+            id="search-tooltip-icon" className="icon is-small is-right"
+            title="This is my tooltip">
+                <i className="fa fa-question"></i>
+                <div id="search-tooltip-template">
+                    <p>You can find the list id in your IMDb list url</p>
+                    <p>e.g. http://www.imdb.com/list/<span className="has-text-weight-bold has-text-primary">ls123456</span>/</p>
+                </div>
+        </span>;
     }
 
     renderContent() {
@@ -87,6 +106,22 @@ class App extends Component {
         }
     }
 
+    componentDidMount() {
+        this.enableSearchTooltip();
+    }
+
+    componentDidUpdate(){
+        this.enableSearchTooltip();
+    }
+
+    enableSearchTooltip() {
+        tippy('#search-tooltip-icon', {
+            html: '#search-tooltip-template',
+            interactive: true,
+            position: 'bottom'
+        });
+    }
+
     async handleSubmit(event) {
         const { listId } = this.state;
         event.preventDefault();
@@ -108,11 +143,11 @@ class App extends Component {
                 const status = error.response.status;
                 if (status === 400) {
                     this.setState({ status: STATUS_NOT_FOUND });
-                    return;         
-                }       
+                    return;
+                }
             }
             this.setState({ error, status: STATUS_ERROR });
-        }        
+        }
     }
 
     handleChange(event) {
@@ -127,6 +162,6 @@ const scrollToContent = () => {
 };
 
 const fetchApiMovies = listId =>
-    axios.get(API_URL + '?listId=' + encodeURIComponent(listId), {responseType: 'json'});
+    axios.get(API_URL + '?listId=' + encodeURIComponent(listId), { responseType: 'json' });
 
 export default App;

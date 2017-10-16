@@ -401,9 +401,6 @@ const getFilter = (doughnutType, name) => {
     return getDirectorFilter(name);
 };
 
-const getActorNames = movies =>
-    _.uniq([].concat(...movies.map(movie => movie.actors)));
-
 const getActorFilter = actor =>
     movie => movie.actors.includes(actor);
 

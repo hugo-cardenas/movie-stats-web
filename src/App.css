@@ -16,6 +16,14 @@
     display: inline-block;
 }
 
+#search-tooltip-icon {
+    pointer-events: auto;
+}
+
+#search-tooltip-template {
+    display: none;
+}
+
 #content {
     margin-top: 20px;
     margin-bottom: 10px;
