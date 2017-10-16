@@ -237,7 +237,8 @@ class Graph extends Component {
                     label: groupBy,
                     data: yearMonthValues.map(label => groupedCount[groupBy][label] ? groupedCount[groupBy][label] : 0),
                     borderColor: chroma(color).css(),
-                    backgroundColor: chroma(color).css()
+                    borderWidth: 1,
+                    backgroundColor: chroma(color).alpha(0.7).css()
                 }
             });
 
@@ -245,10 +246,18 @@ class Graph extends Component {
             labels: yearMonthValues.map(getLabelDate),
             datasets
         };
+
         const options = {
             legend: {
                 display: shouldDisplayLegend(datasets.length),
                 onClick: (e, legendItem) => {}
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero:true
+                    }
+                }]
             }
         };
 
