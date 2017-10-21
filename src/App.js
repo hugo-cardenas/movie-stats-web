@@ -79,7 +79,7 @@ class App extends Component {
             case STATUS_LOADING:
                 return <div id="content" className="container">
                     <a className="button is-loading">Loading</a>
-                    <p>Requesting data from IMDB, please be patient...</p>
+                    <p>Requesting data from IMDb, please be patient...</p>
                 </div>;
             case STATUS_NOT_FOUND:
                 return <div id="content" className="container">
@@ -151,7 +151,7 @@ class App extends Component {
     }
 
     handleChange(event) {
-        this.setState({ listId: event.target.value });
+        this.setState({ listId: event.target.value.trim() });
     }
 }
 
