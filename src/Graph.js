@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
 import { Bar, Doughnut } from 'react-chartjs-2';
-import * as randomColor from 'randomcolor';
+import { randomColor } from 'randomcolor';
 import _ from 'lodash';
 import chroma from 'chroma-js';
 

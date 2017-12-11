@@ -2,11 +2,6 @@
     text-align: center;
 }
 
-.container {
-    margin-left: auto;
-    margin-right: auto;
-}
-
 #root-container {
     margin-top: 50px;
 }
@@ -16,8 +11,34 @@
     display: inline-block;
 }
 
+.file-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-form > label {
+    margin-right: 10px;
+    justify-content: center;
+}
+
 #search-tooltip-icon {
     pointer-events: auto;
+}
+
+.tippy-tooltip-content {
+    text-align: left;
+}
+
+.tippy-tooltip-content > p:not(:last-child) {
+    margin-bottom: 20px;
+}
+
+.tippy-tooltip-content img {
+    display: block;
+    margin-top: 10px;
+    width: 400px;
+    height: auto;
 }
 
 #search-tooltip-template {
@@ -28,10 +49,36 @@
     margin-top: 20px;
     margin-bottom: 10px;
     max-width: 90%;
+    min-height: 300px;
 }
 
 #content .is-loading {
     border: 0;
+}
+
+.footer {
+    /* position: absolute; */
+    /* bottom: 0; */
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer > span {
+    margin-right: 5px;
+}
+
+.footer > a {
+    line-height: 0;
+}
+
+.footer img {
+    width: 30px;
+    height: auto;
+    border-radius: 50%;
+    padding: 2px;
+    border: 1px solid gray; 
 }
 
 .error .notification-title {

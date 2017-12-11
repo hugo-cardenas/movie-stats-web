@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import tippy from 'tippy.js';
 import Graph from './Graph';
+import tooltipImage from './style/img/instructions.gif';
+import avatarImage from './style/img/guybrush.png';
 import 'bulma/css/bulma.css';
 import 'tippy.js/dist/tippy.css';
-import './App.css';
+import './style/App.css';
 
 const
     API_URL = 'https://wt-64e56b26449d9068a9bf156935aa343d-0.run.webtask.io/movie-stats';
@@ -34,8 +36,9 @@ class App extends Component {
             <p className="subtitle">
                 A graph visualization of your IMDb lists
             </p>
-            {this.renderSearch()}
+            {this.renderFileInput()}
             {this.renderContent()}
+            {/* {this.renderFooter()} */}
         </div>;
     }
 
@@ -45,9 +48,26 @@ class App extends Component {
                 <input 
                     className="input" 
                     type="text" placeholder="Input IMDb list id" onChange={this.handleChange.bind(this)}/>
-                {this.renderQuestionIcon()}    
+                {this.renderQuestionIcon()}
             </div>            
         </form>;
+    }
+
+    renderFileInput() {
+        return <div className="file has-name file-form">
+            <label className="file-label">
+                <input className="file-input" type="file" name="resume" />
+                <span className="file-cta">
+                    <span className="file-icon">
+                        <i className="fa fa-upload"></i>
+                    </span>
+                    <span className="file-label">
+                    Choose a file…
+                    </span>
+                </span>
+            </label>
+            {this.renderQuestionIcon()}
+        </div>;
     }
 
     renderQuestionIcon() {
@@ -60,8 +80,12 @@ class App extends Component {
             title="This is my tooltip">
                 <i className="fa fa-question"></i>
                 <div id="search-tooltip-template">
-                    <p>You can find the list id in your IMDb list url</p>
-                    <p>e.g. http://www.imdb.com/list/<span className="has-text-weight-bold has-text-primary">ls123456</span>/</p>
+                    <p>
+                        1. Export your IMDb list to a <span className="has-text-weight-bold has-text-primary">csv</span> file
+                        <img src={tooltipImage} />
+                    </p>
+                    <p>2. Upload it here</p>
+                    
                 </div>
         </span>;
     }
@@ -106,11 +130,18 @@ class App extends Component {
         }
     }
 
+    renderFooter() {
+        return <footer class="footer">
+            <span className="">With 🖤 by</span>
+            <a href="http://hugocardenas.me"><img src={avatarImage} /></a>
+        </footer>;
+    }
+
     componentDidMount() {
         this.enableSearchTooltip();
     }
 
-    componentDidUpdate(){
+    componentDidUpdate() {
         this.enableSearchTooltip();
     }
 
@@ -118,7 +149,9 @@ class App extends Component {
         tippy('#search-tooltip-icon', {
             html: '#search-tooltip-template',
             interactive: true,
-            position: 'bottom'
+            position: 'bottom',
+            arrow: true,
+            distance: 15
         });
     }
 
