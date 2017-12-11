@@ -114,7 +114,7 @@ class Graph extends Component {
                                     value={barType}>
                                     <option key="doughnut-all" value={BAR_ALL}>All movies</option>
                                     <option key="doughnut-director" value={BAR_DIRECTOR}>By director</option>
-                                    <option key="doughnut-actor" value={BAR_ACTOR}>By actor</option>
+                                    {/* <option key="doughnut-actor" value={BAR_ACTOR}>By actor</option> */}
                                 </select>
                             </div>
                         </div>
@@ -173,7 +173,7 @@ class Graph extends Component {
                                     onChange={this.handleDoughnutType.bind(this)}
                                     value={doughnutType}>
                                     <option key="doughnut-director" value={DOUGHNUT_DIRECTOR}>Directors</option>
-                                    <option key="doughnut-actor" value={DOUGHNUT_ACTOR}>Actors</option>
+                                    {/* <option key="doughnut-actor" value={DOUGHNUT_ACTOR}>Actors</option> */}
                                 </select>
                             </div>
                         </div>

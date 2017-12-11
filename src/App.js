@@ -1,15 +1,14 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import tippy from 'tippy.js';
+import parser from 'papaparse';
+import chrono from 'chrono-node';
 import Graph from './Graph';
 import tooltipImage from './style/img/instructions.gif';
 import avatarImage from './style/img/guybrush.png';
 import 'bulma/css/bulma.css';
 import 'tippy.js/dist/tippy.css';
-import './style/App.css';
-
-const
-    API_URL = 'https://wt-64e56b26449d9068a9bf156935aa343d-0.run.webtask.io/movie-stats';
+import './style/App.styl';
 
 const
     STATUS_BLANK = 'blank',
@@ -28,6 +27,10 @@ class App extends Component {
             movies: [],
             status: STATUS_BLANK
         };
+        this.fileInput = null;
+
+        this.fileInputRef = this.fileInputRef.bind(this);
+        this.handleFileInput = this.handleFileInput.bind(this);
     }
 
     render() {
@@ -53,17 +56,24 @@ class App extends Component {
         </form>;
     }
 
+    fileInputRef (ref) {
+        this.fileInput = ref;
+    }
+
     renderFileInput() {
-        return <div className="file has-name file-form">
+        return <div className="file file-form">
             <label className="file-label">
-                <input className="file-input" type="file" name="resume" />
+                <input 
+                    className="file-input" 
+                    type="file" 
+                    onChange={this.handleFileInput}
+                    ref={this.fileInputRef}
+                    />
                 <span className="file-cta">
                     <span className="file-icon">
                         <i className="fa fa-upload"></i>
                     </span>
-                    <span className="file-label">
-                    Choose a file…
-                    </span>
+                    <span className="file-label">Choose a file...</span>
                 </span>
             </label>
             {this.renderQuestionIcon()}
@@ -76,7 +86,7 @@ class App extends Component {
             return '';
         }
         return <span 
-            id="search-tooltip-icon" className="icon is-small is-right"
+            id="search-tooltip-icon" className="icon is-small is-right has-text-grey-light"
             title="This is my tooltip">
                 <i className="fa fa-question"></i>
                 <div id="search-tooltip-template">
@@ -85,7 +95,6 @@ class App extends Component {
                         <img src={tooltipImage} />
                     </p>
                     <p>2. Upload it here</p>
-                    
                 </div>
         </span>;
     }
@@ -96,14 +105,13 @@ class App extends Component {
             case STATUS_ERROR:
                 return <div id="content" className="container">
                     <div className="error notification">
-                        <p className="notification-title">Oops, this is embarrasing...</p>
+                        <p className="notification-title">Something went wrong...</p>
                         <p className="notification-details">{error.message}</p>
                     </div>
                 </div>;
             case STATUS_LOADING:
                 return <div id="content" className="container">
                     <a className="button is-loading">Loading</a>
-                    <p>Requesting data from IMDb, please be patient...</p>
                 </div>;
             case STATUS_NOT_FOUND:
                 return <div id="content" className="container">
@@ -155,36 +163,20 @@ class App extends Component {
         });
     }
 
-    async handleSubmit(event) {
-        const { listId } = this.state;
-        event.preventDefault();
-        if (!listId) return;
-
-        this.setState({ status: STATUS_LOADING });
-        try {
-            const response = await fetchApiMovies(listId);
-            const movies = response.data;
-            if (movies.length > 0) {
-                this.setState({ movies, status: STATUS_LOADED },
-                    () => setTimeout(scrollToContent, 100)
-                );
-            } else {
-                this.setState({ status: STATUS_LOADED_EMPTY });
-            }
-        } catch (error) {
-            if (error.response) {
-                const status = error.response.status;
-                if (status === 400) {
-                    this.setState({ status: STATUS_NOT_FOUND });
-                    return;
-                }
-            }
-            this.setState({ error, status: STATUS_ERROR });
-        }
-    }
-
     handleChange(event) {
         this.setState({ listId: event.target.value.trim() });
+    }
+
+    async handleFileInput(event) {
+        this.setState({ status: STATUS_LOADING });
+        try {
+            const movies = await getMoviesFromCsv(this.fileInput.files[0]);
+            this.setState({ movies, status: STATUS_LOADED },
+                () => setTimeout(scrollToContent, 100)
+            );
+        } catch (error) {
+            this.setState({ error, status: STATUS_ERROR });
+        }
     }
 }
 
@@ -194,7 +186,50 @@ const scrollToContent = () => {
     });
 };
 
-const fetchApiMovies = listId =>
-    axios.get(API_URL + '?listId=' + encodeURIComponent(listId), { responseType: 'json' });
+const getMoviesFromCsv = file => {
+    return new Promise((resolve, reject) => {
+        const handleComplete = results => {
+            if (results.errors.length > 0) {
+                const message = 'Unable to read CSV file \n'
+                    + results.errors
+                        .map(err => err.message)
+                        .slice(0, 3)
+                        .join('\n')
+                    + '\n...';
+                return reject(new Error(message));
+            }
+
+            try {
+                return resolve(results.data.map(mapToMovie));
+            } catch (err) {
+                return reject(new Error('Unable to read CSV file'));
+            }
+        };
+        
+        parser.parse(file, {
+            complete: handleComplete, 
+            dynamicTyping: true,
+            error: reject,
+            header: true,
+            skipEmptyLines: true
+        })
+    });
+};
+
+const mapToMovie = data => {
+    return {
+        actors: [],
+        createdAt: toTimestamp(data.Created),
+        director: data.Directors.split(', ')[0],
+        genres: data.Genres.split(', '),
+        id: data.Const,
+        name: data.Title,
+        timelineIndex: data.Position,
+        userRating: data['IMDb Rating'],
+        year: data.Year,
+    };
+};
+
+const toTimestamp = dateString => Math.floor(chrono.parseDate(dateString).getTime() / 1000);
 
 export default App;
