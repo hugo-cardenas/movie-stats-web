@@ -3,7 +3,7 @@ import axios from 'axios';
 import tippy from 'tippy.js';
 import parser from 'papaparse';
 import chrono from 'chrono-node';
-import Graph from './Graph';
+import Graph from './graph/Graph';
 import tooltipImage from './style/img/instructions.gif';
 import avatarImage from './style/img/guybrush.png';
 import 'bulma/css/bulma.css';
@@ -31,6 +31,9 @@ class App extends Component {
 
         this.fileInputRef = this.fileInputRef.bind(this);
         this.handleFileInput = this.handleFileInput.bind(this);
+
+        // this.state.movies = require('../test/movies');
+        // this.state.status = STATUS_LOADED;
     }
 
     render() {
@@ -171,6 +174,7 @@ class App extends Component {
         this.setState({ status: STATUS_LOADING });
         try {
             const movies = await getMoviesFromCsv(this.fileInput.files[0]);
+            console.log(JSON.stringify(movies));
             this.setState({ movies, status: STATUS_LOADED },
                 () => setTimeout(scrollToContent, 100)
             );
