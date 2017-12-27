@@ -20,13 +20,15 @@ module.exports = {
             },
             {
                 test: /\.(png|jpg|gif)$/,
-                use: [{
-                    loader: 'file-loader',
-                    options: {
-                        name: '[name].[ext]',
-                        outputPath: 'img/'
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: '[name].[ext]',
+                            outputPath: 'img/'
+                        }
                     }
-                }]
+                ]
             }
         ]
     },
@@ -40,5 +42,5 @@ module.exports = {
             filename: 'index.html',
             template: './src/template/index.html'
         })
-    ],
+    ]
 };

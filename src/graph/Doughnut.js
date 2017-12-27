@@ -4,11 +4,7 @@ import { Doughnut as DoughnutChart } from 'react-chartjs-2';
 import _ from 'lodash';
 import { randomColor } from 'randomcolor';
 import { chartRef, getChartItems, getGroupedMovies, shouldDisplayLegend } from './selectors';
-import {
-    FIELD_ACTOR,
-    FIELD_DIRECTOR,
-    FIELD_GENRE
-} from './types';
+import { FIELD_ACTOR, FIELD_DIRECTOR, FIELD_GENRE } from './types';
 
 const DEFAULT_MIN_COUNT = 2;
 
@@ -22,58 +18,74 @@ class Doughnut extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        return !_.isEqual(this.props, nextProps) ||
-            !_.isEqual(this.state, nextState);
+        return !_.isEqual(this.props, nextProps) || !_.isEqual(this.state, nextState);
     }
 
     render() {
-        return <div id="chart-container">
-            {this.renderDoughnutForm()}
-            {this.renderDoughnutChart()}
-        </div>;
+        return (
+            <div id="chart-container">
+                {this.renderDoughnutForm()}
+                {this.renderDoughnutChart()}
+            </div>
+        );
     }
 
     renderDoughnutForm() {
         const { type, minCount } = this.state;
-        return <form id="graph-config">
-            <div className="field is-horizontal">
-                <div className="field-body">
-                    <div className="field">
-                        <div className="control">
-                            <div className="select">
-                                <select 
-                                    onChange={this.handleDoughnutType.bind(this)}
-                                    value={type}>
-                                    <option key="doughnut-director" value={FIELD_DIRECTOR}>Directors</option>
-                                    {/* <option key="doughnut-actor" value={FIELD_ACTOR}>Actors</option> */}
-                                    <option key="doughnut-genre" value={FIELD_GENRE}>Genres</option>
-                                </select>
+        return (
+            <form id="graph-config">
+                <div className="field is-horizontal">
+                    <div className="field-body">
+                        <div className="field">
+                            <div className="control">
+                                <div className="select">
+                                    <select
+                                        onChange={this.handleDoughnutType.bind(this)}
+                                        value={type}>
+                                        <option key="doughnut-director" value={FIELD_DIRECTOR}>
+                                            Directors
+                                        </option>
+                                        {/* <option key="doughnut-actor" value={FIELD_ACTOR}>Actors</option> */}
+                                        <option key="doughnut-genre" value={FIELD_GENRE}>
+                                            Genres
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="field is-horizontal">
-                        <div className="field-label is-normal">
-                            <p>appearing at least</p>
-                        </div>
-                        <div className="field-body">
-                            <div className="field">
-                                <div className="control">
-                                    <div className="select">
-                                        <select onChange={this.handleDoughnutMinCount.bind(this)} 
-                                            value={minCount}>
-                                            <option key="doughnut-min-1" value="1">once</option>
-                                            <option key="doughnut-min-2" value="2">twice</option>
-                                            <option key="doughnut-min-3" value="3">3 times</option>
-                                            <option key="doughnut-min-4" value="4">4 times</option>
-                                        </select>
+                        <div className="field is-horizontal">
+                            <div className="field-label is-normal">
+                                <p>appearing at least</p>
+                            </div>
+                            <div className="field-body">
+                                <div className="field">
+                                    <div className="control">
+                                        <div className="select">
+                                            <select
+                                                onChange={this.handleDoughnutMinCount.bind(this)}
+                                                value={minCount}>
+                                                <option key="doughnut-min-1" value="1">
+                                                    once
+                                                </option>
+                                                <option key="doughnut-min-2" value="2">
+                                                    twice
+                                                </option>
+                                                <option key="doughnut-min-3" value="3">
+                                                    3 times
+                                                </option>
+                                                <option key="doughnut-min-4" value="4">
+                                                    4 times
+                                                </option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </form>;
+            </form>
+        );
     }
 
     handleDoughnutType(event) {
@@ -95,12 +107,16 @@ class Doughnut extends Component {
         const attribute = getDataAttribute(type);
         const count = getGroupedMovies(movies, attribute, true);
         const items = getChartItems(count, minCount);
-        
+
         const data = {
-            datasets: [{
-                data: items.map(item => item.count),
-                backgroundColor: items.map(item => randomColor({ luminosity: 'light', count: items.count }))
-            }],
+            datasets: [
+                {
+                    data: items.map(item => item.count),
+                    backgroundColor: items.map(item =>
+                        randomColor({ luminosity: 'light', count: items.count })
+                    )
+                }
+            ],
             labels: items.map(item => item.label)
         };
 
@@ -111,14 +127,14 @@ class Doughnut extends Component {
         // TODO REMOVE TYPE
         const ref = elem => chartRef(movies, 'doughnut', type, elem);
 
-        return <DoughnutChart data={data} options={options} ref={ref}/>;
+        return <DoughnutChart data={data} options={options} ref={ref} />;
     }
 }
 
 export default Doughnut;
 
 const getDataAttribute = chartType => {
-    switch (chartType) {
+    switch (chartType) {
         case FIELD_ACTOR:
             return 'actors';
         case FIELD_DIRECTOR:

@@ -17,20 +17,19 @@ const getGroupedMovies = (movies, groupBy, getCount = false) => {
                 groupedMovies[value] = [];
             }
             groupedMovies[value].push(movie);
-        })
+        });
     });
 
     if (getCount) {
-        return _.mapValues(groupedMovies, subgroup => subgroup.length)
+        return _.mapValues(groupedMovies, subgroup => subgroup.length);
     }
     return groupedMovies;
 };
 
 const getChartItems = (attributeCount, minCount = -1) => {
-    const items = Object
-        .keys(attributeCount)
+    const items = Object.keys(attributeCount)
         .map(attribute => {
-            return { count: attributeCount[attribute], label: attribute }
+            return { count: attributeCount[attribute], label: attribute };
         })
         .filter(item => minCount < 0 || item.count >= minCount);
 
@@ -51,19 +50,14 @@ const getFilter = (field, name) => {
     }
 };
 
-const getActorFilter = actor =>
-    movie => movie.actors.includes(actor);
+const getActorFilter = actor => movie => movie.actors.includes(actor);
 
-const getDirectorFilter = director =>
-    movie => movie.director === director;
+const getDirectorFilter = director => movie => movie.director === director;
 
-const getGenreFilter = genre =>
-    movie => movie.genres.includes(genre);
+const getGenreFilter = genre => movie => movie.genres.includes(genre);
 
 const getFilteredMovieNames = (movies, filter) => {
-    const filteredMovies = movies
-        .filter(filter)
-        .map(movie => movie.name);
+    const filteredMovies = movies.filter(filter).map(movie => movie.name);
     filteredMovies.sort();
     return filteredMovies;
 };
@@ -80,23 +74,9 @@ const getMoviesWithDateInfo = movies => {
     });
 };
 
-const monthNumberToString = month =>
-    month < 10 ? `0${month}` : month;
+const monthNumberToString = month => (month < 10 ? `0${month}` : month);
 
-const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec'
-];
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const getMonthNumber = monthName => months.indexOf(monthName) + 1;
 
@@ -122,7 +102,7 @@ const shouldDisplayLegend = numLabels => {
 };
 
 const chartRef = (movies, chartType, dataType, elem) => {
-    if (!elem)  return;
+    if (!elem) return;
     const chart = elem.chart_instance;
     const canvas = ReactDOM.findDOMNode(elem);
 
@@ -135,7 +115,8 @@ const chartRef = (movies, chartType, dataType, elem) => {
             if (chartType === CHART_BAR) {
                 const labelDate = chart.data.labels[element._index];
                 const name = chart.data.datasets[element._datasetIndex].label;
-                const dateFilter = movie => movie.createdAtYearMonth === getYearMonthDate(labelDate);
+                const dateFilter = movie =>
+                    movie.createdAtYearMonth === getYearMonthDate(labelDate);
 
                 if (dataType === FIELD_ALL) {
                     filter = dateFilter;
@@ -160,7 +141,6 @@ const chartRef = (movies, chartType, dataType, elem) => {
                 .map(name => createHtmlElement('p', name))
                 .forEach(elem => document.getElementById('movie-tooltip').appendChild(elem));
             tooltip.classList.remove('hidden');
-
         } catch (err) {
             document.getElementById('movie-tooltip').classList.add('hidden');
         }

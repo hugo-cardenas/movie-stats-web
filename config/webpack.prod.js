@@ -11,10 +11,7 @@ module.exports = merge(commonConfig, {
                 NODE_ENV: JSON.stringify('production')
             }
         }),
-        new CleanWebpackPlugin(
-            ['../dist'],
-            { allowExternal: true }
-        ),
+        new CleanWebpackPlugin(['../dist'], { allowExternal: true }),
         new UglifyJSPlugin()
     ]
 });

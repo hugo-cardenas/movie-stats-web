@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom'
+import ReactDOM from 'react-dom';
 import Bar from './Bar';
 import Doughnut from './Doughnut';
 import { randomColor } from 'randomcolor';
 import _ from 'lodash';
 
-const
-    CHART_BAR = 'bar',
+const CHART_BAR = 'bar',
     CHART_DOUGHNUT = 'doughnut';
 
 class Graph extends Component {
@@ -18,16 +17,17 @@ class Graph extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        return !_.isEqual(this.props, nextProps) ||
-            !_.isEqual(this.state, nextState);
+        return !_.isEqual(this.props, nextProps) || !_.isEqual(this.state, nextState);
     }
 
     render() {
-        return <div id="graph-container">
-            <div id="movie-tooltip" className="hidden"></div>
-            {this.renderTabs()}
-            {this.renderChartContainer()}
-        </div>;
+        return (
+            <div id="graph-container">
+                <div id="movie-tooltip" className="hidden" />
+                {this.renderTabs()}
+                {this.renderChartContainer()}
+            </div>
+        );
     }
 
     renderTabs() {
@@ -40,25 +40,27 @@ class Graph extends Component {
             {
                 type: CHART_BAR,
                 text: 'Timeline'
-            },
-        ]
-        return <div className="tabs is-centered">
-            <ul>
-                {tabs.map(tab => 
-                    <li 
-                        key={tab.type}
-                        className={tab.type === chartType ? 'is-active' : ''}
-                        onClick={this.switchToTab.bind(this, tab.type)}>
+            }
+        ];
+        return (
+            <div className="tabs is-centered">
+                <ul>
+                    {tabs.map(tab => (
+                        <li
+                            key={tab.type}
+                            className={tab.type === chartType ? 'is-active' : ''}
+                            onClick={this.switchToTab.bind(this, tab.type)}>
                             <a>{tab.text}</a>
-                    </li>
-                )}
-            </ul>
-        </div>;
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        );
     }
 
     switchToTab(type) {
-        this.setState({ chartType: type },
-            () => document.querySelector('#content').scrollIntoView()
+        this.setState({ chartType: type }, () =>
+            document.querySelector('#content').scrollIntoView()
         );
     }
 
@@ -79,7 +81,7 @@ class Graph extends Component {
 
     renderDoughnut() {
         return <Doughnut movies={this.props.movies} />;
-    }   
+    }
 }
 
 export default Graph;
