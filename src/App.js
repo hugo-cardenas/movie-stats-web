@@ -174,7 +174,6 @@ class App extends Component {
         this.setState({ status: STATUS_LOADING });
         try {
             const movies = await getMoviesFromCsv(this.fileInput.files[0]);
-            console.log(JSON.stringify(movies));
             this.setState({ movies, status: STATUS_LOADED },
                 () => setTimeout(scrollToContent, 100)
             );
