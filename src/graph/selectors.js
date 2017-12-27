@@ -4,7 +4,8 @@ import {
     CHART_DOUGHNUT,
     FIELD_ACTOR,
     FIELD_DIRECTOR,
-    FIELD_ALL
+    FIELD_ALL,
+    FIELD_GENRE
 } from './types';
 
 const getGroupedMovies = (movies, groupBy, getCount = false) => {
@@ -37,11 +38,17 @@ const getChartItems = (attributeCount, minCount = -1) => {
     return items;
 };
 
-const getFilter = (doughnutType, name) => {
-    if (doughnutType === FIELD_ACTOR) {
-        return getActorFilter(name);
+const getFilter = (field, name) => {
+    // TODO Throw error if invalid
+    switch (field) {
+        case FIELD_ACTOR:
+            return getActorFilter(name);
+        case FIELD_DIRECTOR:
+            return getDirectorFilter(name);
+        case FIELD_GENRE:
+        default:
+            return getGenreFilter(name);
     }
-    return getDirectorFilter(name);
 };
 
 const getActorFilter = actor =>
@@ -49,6 +56,9 @@ const getActorFilter = actor =>
 
 const getDirectorFilter = director =>
     movie => movie.director === director;
+
+const getGenreFilter = genre => 
+    movie => movie.genres.includes(genre);
 
 const getFilteredMovieNames = (movies, filter) => {
     const filteredMovies = movies

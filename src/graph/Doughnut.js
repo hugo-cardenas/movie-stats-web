@@ -6,7 +6,8 @@ import { randomColor } from 'randomcolor';
 import { chartRef, getChartItems, getGroupedMovies, shouldDisplayLegend } from './selectors';
 import {
     FIELD_ACTOR,
-    FIELD_DIRECTOR
+    FIELD_DIRECTOR,
+    FIELD_GENRE
 } from './types';
 
 const DEFAULT_MIN_COUNT = 2;
@@ -45,6 +46,7 @@ class Doughnut extends Component {
                                     value={type}>
                                     <option key="doughnut-director" value={FIELD_DIRECTOR}>Directors</option>
                                     {/* <option key="doughnut-actor" value={FIELD_ACTOR}>Actors</option> */}
+                                    <option key="doughnut-genre" value={FIELD_GENRE}>Genres</option>
                                 </select>
                             </div>
                         </div>
@@ -76,7 +78,7 @@ class Doughnut extends Component {
 
     handleDoughnutType(event) {
         const type = event.target.value;
-        if ([FIELD_ACTOR, FIELD_DIRECTOR].includes(type)) {
+        if ([FIELD_ACTOR, FIELD_DIRECTOR, FIELD_GENRE].includes(type)) {
             this.setState({ type });
         }
     }
@@ -90,7 +92,7 @@ class Doughnut extends Component {
         const { movies } = this.props;
         const { type, minCount } = this.state;
 
-        const attribute = type === FIELD_DIRECTOR ? 'director' : 'actors';
+        const attribute = getDataAttribute(type);
         const count = getGroupedMovies(movies, attribute, true);
         const items = getChartItems(count, minCount);
         
@@ -114,3 +116,15 @@ class Doughnut extends Component {
 }
 
 export default Doughnut;
+
+const getDataAttribute = chartType => {
+    switch (chartType) {
+        case FIELD_ACTOR:
+            return 'actors';
+        case FIELD_DIRECTOR:
+            return 'director';
+        case FIELD_GENRE:
+        default:
+            return 'genres';
+    }
+};
