@@ -15,7 +15,8 @@ import {
 import {
     FIELD_ALL,
     FIELD_ACTOR,
-    FIELD_DIRECTOR
+    FIELD_DIRECTOR,
+    FIELD_GENRE
 } from './types';
 
 const DEFAULT_MIN_COUNT = 4;
@@ -48,13 +49,14 @@ class Bar extends Component {
                                     onChange={this.handleType.bind(this)}
                                     value={type}>
                                     <option key="doughnut-all" value={FIELD_ALL}>All movies</option>
-                                    <option key="doughnut-director" value={FIELD_DIRECTOR}>By director</option>
                                     {/* <option key="doughnut-actor" value={FIELD_ACTOR}>By actor</option> */}
+                                    <option key="doughnut-director" value={FIELD_DIRECTOR}>By director</option>
+                                    <option key="doughnut-genre" value={FIELD_GENRE}>By genre</option>
                                 </select>
                             </div>
                         </div>
                     </div>
-                    {type !== FIELD_ALL ? this.renderBarFormCountFilter() : ''}
+                    {type !== FIELD_ALL ? this.renderBarFormCountFilter() : null}
                 </div>
             </div>
         </form>;
@@ -138,7 +140,7 @@ class Bar extends Component {
 
     handleType(event) {
         const type = event.target.value;
-        if ([FIELD_ALL, FIELD_ACTOR, FIELD_DIRECTOR].includes(type)) {
+        if ([FIELD_ALL, FIELD_ACTOR, FIELD_DIRECTOR, FIELD_GENRE].includes(type)) {
             this.setState({ type });
         }
     }
@@ -159,6 +161,10 @@ const getBarGroupedCount = (movies, type) => {
             );
         case FIELD_DIRECTOR:
             return _.mapValues(getGroupedMovies(movies, 'director'), movies =>
+                getGroupedMovies(movies, 'createdAtYearMonth', true)
+            );
+        case FIELD_GENRE:
+            return _.mapValues(getGroupedMovies(movies, 'genres'), movies =>
                 getGroupedMovies(movies, 'createdAtYearMonth', true)
             );
         case FIELD_ALL:

@@ -13,7 +13,7 @@ class Graph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartType: CHART_DOUGHNUT
+            chartType: CHART_BAR
         };
     }
 

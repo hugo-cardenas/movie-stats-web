@@ -57,7 +57,7 @@ const getActorFilter = actor =>
 const getDirectorFilter = director =>
     movie => movie.director === director;
 
-const getGenreFilter = genre => 
+const getGenreFilter = genre =>
     movie => movie.genres.includes(genre);
 
 const getFilteredMovieNames = (movies, filter) => {
@@ -75,12 +75,12 @@ const getMoviesWithDateInfo = movies => {
         const month = date.getMonth() + 1;
         return {
             ...movie,
-           createdAtYearMonth: `${year} - ${monthNumberToString(month)}`
+            createdAtYearMonth: `${year} - ${monthNumberToString(month)}`
         };
     });
 };
 
-const monthNumberToString = month => 
+const monthNumberToString = month =>
     month < 10 ? `0${month}` : month;
 
 const months = [
@@ -136,21 +136,19 @@ const chartRef = (movies, chartType, dataType, elem) => {
                 const labelDate = chart.data.labels[element._index];
                 const name = chart.data.datasets[element._datasetIndex].label;
                 const dateFilter = movie => movie.createdAtYearMonth === getYearMonthDate(labelDate);
-                
+
                 if (dataType === FIELD_ALL) {
                     filter = dateFilter;
-                } else if (dataType === FIELD_DIRECTOR) {
-                    filter = movie => dateFilter(movie) && getDirectorFilter(name)(movie);
                 } else {
-                    filter = movie => dateFilter(movie) && getActorFilter(name)(movie);
+                    filter = movie => dateFilter(movie) && getFilter(dataType, name)(movie);
                 }
-            } else {
+            } else if (chartType === CHART_DOUGHNUT) {
                 const name = chart.data.labels[element._index];
                 filter = getFilter(dataType, name);
             }
 
             let movieNames = getFilteredMovieNames(movies, filter);
-            if (movieNames.length < 1) throw new Error();
+            if (movieNames.length < 1) throw new Error('No movies found with the current filter');
 
             if (movieNames.length > 15) {
                 movieNames = movieNames.slice(0, 15);
