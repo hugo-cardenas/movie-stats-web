@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "build": "webpack --config ./config/webpack.prod.js",
-    "deploy": "npm run build && npm run deploy:aws",
-    "deploy:aws": "aws s3 sync dist s3://hugocardenas.me/movie-stats --exclude '.DS_Store' --delete",
+    "deploy": "npm run build && now --name imdb-movie-stats --static --public dist",
     "format": "prettier --jsx-bracket-same-line true --print-width 100 --single-quote --tab-width 4 --write '{config,src,test}/**/*.{js,json}'",
     "start": "webpack-dev-server --open --config ./config/webpack.dev.js",
     "test": "jest test"
